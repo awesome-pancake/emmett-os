@@ -30,6 +30,27 @@ UINT64 FileSize(EFI_FILE_HANDLE file_handle)
   return size;
 }
 
+EFI_STATUS GetMapKey(UINT64 *map_key){
+  // Get memory map size and initialize some variables
+  EFI_STATUS status;
+  UINTN map_size = 0;
+  EFI_MEMORY_DESCRIPTOR *memory_map = NULL;
+  UINTN descriptor_size = 0;
+  UINT32 descriptor_version = 0;
+  uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size, &memory_map, NULL, &descriptor_size, NULL);
+  
+  map_size += 2 * descriptor_size;
+
+  // Get memory map
+  uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, map_size, (void **)&memory_map);
+  status = uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size, &memory_map, map_key, &descriptor_size, &descriptor_version);
+  if(EFI_ERROR(status)){
+    return status;
+  }
+
+  return EFI_SUCCESS;
+}
+
 EFI_STATUS
 EFIAPI
 efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
@@ -49,11 +70,15 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     return status;
   }
 
+  Print(L"Successfully opened kernel file.\r\n");
+
   // Size of the file
   UINT64 byte_size;
   UINT64 page_size;
   byte_size = FileSize(file_handle);
   page_size = (UINT64)(1.0 + byte_size/0x1000);
+
+  Print(L"Successfully retrieved size of kernel.\r\n");
 
   // Allocate pages
   status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages, EfiLoaderData, page_size, kernel_buffer);
@@ -62,12 +87,16 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     return status;
   }
 
+  Print(L"Successfully allocated space for the kernel.\r\n");
+
   // Read kernel
   status = uefi_call_wrapper(file_handle->Read, 3, file_handle, &byte_size, (UINT8*)kernel_buffer);
   if(EFI_ERROR(status)){
     Print(L"Could not read file.\r\n");
     return status;
   }
+
+  Print(L"Successfully read kernel.\r\n");
 
   // Close file
   status = uefi_call_wrapper(file_handle->Close, 1, file_handle);
@@ -76,23 +105,16 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     return status;
   }
 
-  // Get memory map size and initialize some variables
-  UINTN map_size = 0;
-  EFI_MEMORY_DESCRIPTOR *memory_map = NULL;
-  UINTN map_key = 0;
-  UINTN descriptor_size = 0;
-  UINT32 descriptor_version = 0;
-  status = uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size, &memory_map, NULL, &descriptor_size, NULL);
-  
-  map_size += 2 * descriptor_size;
+  Print(L"Successfully closed file.\r\n");
 
-  // Get memory map
-  uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, map_size, (void **)&memory_map);
-  status = uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size, &memory_map, &map_key, &descriptor_size, &descriptor_version);
+  UINT64 map_key = 0;
+  status = GetMapKey(&map_key);
   if(EFI_ERROR(status)){
-    Print(L"Could not retreive memory map.\r\n");
+    Print(L"Could not get memory map.\r\n");
     return status;
   }
+
+  Print(L"Successfully retrieved memory map.\r\n");
 
   // Exit boot services
   status = uefi_call_wrapper(BS->ExitBootServices, 2, ImageHandle, map_key);
