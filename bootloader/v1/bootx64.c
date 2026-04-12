@@ -30,7 +30,8 @@ UINT64 FileSize(EFI_FILE_HANDLE file_handle)
   return size;
 }
 
-EFI_STATUS GetMapKey(UINT64 *map_key){
+EFI_STATUS GetMapKey(UINT64 *map_key)
+{
   // Get memory map size and initialize some variables
   EFI_STATUS status;
   UINTN map_size = 0;
@@ -43,7 +44,7 @@ EFI_STATUS GetMapKey(UINT64 *map_key){
     Print(L"Could not get memory map size: %d\r\n", status);
     return status;
   }
-  
+
   // Accounts for the increase in size of the memory map after allocation
   map_size += 2 * descriptor_size;
 
@@ -62,6 +63,17 @@ EFI_STATUS GetMapKey(UINT64 *map_key){
   }
 
   return EFI_SUCCESS;
+}
+
+EFI_PHYSICAL_ADDRESS GetFrameBuffer()
+{
+  EFI_GUID gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
+
+  // Locate graphics output protocol
+  uefi_call_wrapper(BS->LocateProtocol, 3, &gop_guid, NULL, (void**)&gop);
+
+  return gop->Mode->FrameBufferBase;
 }
 
 EFI_STATUS
@@ -120,6 +132,8 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
   Print(L"Successfully closed file.\r\n");
 
+  EFI_PHYSICAL_ADDRESS frame_buffer = GetFrameBuffer();
+
   UINT64 map_key = 0;
   status = GetMapKey(&map_key);
   if(EFI_ERROR(status)){
@@ -133,6 +147,10 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     Print(L"Could not exit boot services.\r\n");
     return status;
   }
+
+  // Write to frame buffer
+  UINT8 *px = (UINT8*)frame_buffer;
+  *px = 0xFF;
 
   for(;;);
 
