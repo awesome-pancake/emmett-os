@@ -83,10 +83,10 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   InitializeLib(ImageHandle, SystemTable);
 
   EFI_STATUS status;
-  EFI_PHYSICAL_ADDRESS kernel_buffer;
+  EFI_PHYSICAL_ADDRESS kernel_buffer = 0;
   EFI_FILE_HANDLE volume = GetVolume(ImageHandle);
   EFI_FILE_HANDLE file_handle;
-  CHAR16 *file_name = L"TEST.TXT";
+  CHAR16 *file_name = L"test.bin";
 
   // Open file
   status = uefi_call_wrapper(volume->Open, 5, volume, &file_handle, file_name, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY | EFI_FILE_HIDDEN | EFI_FILE_SYSTEM);
@@ -103,19 +103,22 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   byte_size = FileSize(file_handle);
   page_size = (UINT64)(1.0 + byte_size/0x1000);
 
-  Print(L"Successfully retrieved size of kernel.\r\n");
+  // Add additional pages for kernel stack
+  // page_size += 2;
 
+  Print(L"Kernel size: %d bytes, %d pages.\r\n", byte_size, page_size);
+  
   // Allocate pages
-  status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages, EfiLoaderData, page_size, kernel_buffer);
+  status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages, EfiLoaderData, page_size, &kernel_buffer);
   if(EFI_ERROR(status)){
-    Print(L"Could not allocate pages.\r\n");
+    Print(L"Could not allocate pages: %d\r\n", status);
     return status;
   }
 
-  Print(L"Successfully allocated space for the kernel.\r\n");
+  Print(L"Successfully allocated space for the kernel: %#X\r\n", kernel_buffer);
 
   // Read kernel
-  status = uefi_call_wrapper(file_handle->Read, 3, file_handle, &byte_size, (UINT8*)kernel_buffer);
+  status = uefi_call_wrapper(file_handle->Read, 3, file_handle, &byte_size, (VOID*)kernel_buffer);
   if(EFI_ERROR(status)){
     Print(L"Could not read file.\r\n");
     return status;
@@ -134,6 +137,8 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
   EFI_PHYSICAL_ADDRESS frame_buffer = GetFrameBuffer();
 
+  // Print(L"frame buffer address: %X\r\n", frame_buffer);
+
   UINT64 map_key = 0;
   status = GetMapKey(&map_key);
   if(EFI_ERROR(status)){
@@ -148,11 +153,22 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     return status;
   }
 
-  // Write to frame buffer
-  UINT8 *px = (UINT8*)frame_buffer;
-  *px = 0xFF;
+  // Write red pixel to frame buffer
+  // UINT8 *px = (UINT8*)frame_buffer + 2;
+  // *px = 0xFF;
 
-  for(;;);
-
+  
   // TODO: Pass frame buffer and memory map to the kernel
+  // Set ebp, esp
+  // Put frame buffer and memory map as arguments
+  // Jmp to kernel code
+
+  asm( // Jump to kernel
+    "jmp *%0"
+    :
+    :"r"(kernel_buffer)
+  );
+  
+  // Just in case
+  for(;;);
 }
