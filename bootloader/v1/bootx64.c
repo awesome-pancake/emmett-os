@@ -91,7 +91,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   // Open file
   status = uefi_call_wrapper(volume->Open, 5, volume, &file_handle, file_name, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY | EFI_FILE_HIDDEN | EFI_FILE_SYSTEM);
   if(EFI_ERROR(status)){
-    Print(L"Could not open file, or find volume.\r\n");
+    Print(L"(ERROR) Could not open file, or find volume. Exit code: %d\r\n", status);
     return status;
   }
 
@@ -111,16 +111,16 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   // Allocate pages
   status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages, EfiLoaderData, page_size, &kernel_buffer);
   if(EFI_ERROR(status)){
-    Print(L"Could not allocate pages: %d\r\n", status);
+    Print(L"(ERROR) Could not allocate pages. Exit code: %d\r\n", status);
     return status;
   }
 
-  Print(L"Successfully allocated space for the kernel: %#X\r\n", kernel_buffer);
+  Print(L"Successfully allocated space for the kernel: %X\r\n", kernel_buffer);
 
   // Read kernel
   status = uefi_call_wrapper(file_handle->Read, 3, file_handle, &byte_size, (VOID*)kernel_buffer);
   if(EFI_ERROR(status)){
-    Print(L"Could not read file.\r\n");
+    Print(L"(ERROR) Could not read file. Exit code: %d\r\n", status);
     return status;
   }
 
@@ -129,7 +129,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   // Close file
   status = uefi_call_wrapper(file_handle->Close, 1, file_handle);
   if(EFI_ERROR(status)){
-    Print(L"Could not close file.");
+    Print(L"(ERROR) Could not close file. Exit code: %d\r\n", status);
     return status;
   }
 
@@ -137,26 +137,19 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
   EFI_PHYSICAL_ADDRESS frame_buffer = GetFrameBuffer();
 
-  // Print(L"frame buffer address: %X\r\n", frame_buffer);
-
   UINT64 map_key = 0;
   status = GetMapKey(&map_key);
   if(EFI_ERROR(status)){
-    Print(L"Could not get memory map.\r\n");
+    Print(L"(ERROR) Could not get memory map. Exit code: %d\r\n", status);
     return status;
   }
 
   // Exit boot services
   status = uefi_call_wrapper(BS->ExitBootServices, 2, ImageHandle, map_key);
   if(EFI_ERROR(status)){
-    Print(L"Could not exit boot services.\r\n");
+    Print(L"(ERROR) Could not exit boot services. Exit code: %d\r\n", status);
     return status;
   }
-
-  // Write red pixel to frame buffer
-  // UINT8 *px = (UINT8*)frame_buffer + 2;
-  // *px = 0xFF;
-
   
   // TODO: Pass frame buffer and memory map to the kernel
   // Set ebp, esp
