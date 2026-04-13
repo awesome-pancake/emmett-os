@@ -86,7 +86,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   EFI_PHYSICAL_ADDRESS kernel_buffer = 0;
   EFI_FILE_HANDLE volume = GetVolume(ImageHandle);
   EFI_FILE_HANDLE file_handle;
-  CHAR16 *file_name = L"test.bin";
+  CHAR16 *file_name = L"kernel.bin";
 
   // Open file
   status = uefi_call_wrapper(volume->Open, 5, volume, &file_handle, file_name, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY | EFI_FILE_HIDDEN | EFI_FILE_SYSTEM);
