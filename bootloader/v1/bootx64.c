@@ -1,6 +1,13 @@
 #include <efi.h>
 #include <efilib.h>
 
+// Kernel display structure
+typedef struct{
+    uint8_t     *frame_buffer;
+    uint32_t    horizontal_resolution;
+    uint32_t    vertical_resolution;
+} DISPLAY;
+
 EFI_FILE_HANDLE GetVolume(EFI_HANDLE image)
 {
   EFI_LOADED_IMAGE *loaded_image = NULL;
@@ -67,15 +74,19 @@ EFI_STATUS GetMapKey(UINT64 *map_key, EFI_MEMORY_DESCRIPTOR *output_map)
   return EFI_SUCCESS;
 }
 
-EFI_PHYSICAL_ADDRESS GetFrameBuffer()
+DISPLAY *GetDisplay()
 {
+  DISPLAY *display = AllocatePool(sizeof(DISPLAY));
   EFI_GUID gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
   EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
 
   // Locate graphics output protocol
   uefi_call_wrapper(BS->LocateProtocol, 3, &gop_guid, NULL, (void**)&gop);
 
-  return gop->Mode->FrameBufferBase;
+  display->frame_buffer = (uint8_t*)gop->Mode->FrameBufferBase;
+  display->vertical_resolution = gop->Mode->Info->VerticalResolution;
+  display->horizontal_resolution = gop->Mode->Info->HorizontalResolution;
+  return display;
 }
 
 EFI_STATUS
@@ -137,7 +148,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
   Print(L"Successfully closed file.\r\n");
 
-  EFI_PHYSICAL_ADDRESS frame_buffer = GetFrameBuffer();
+  DISPLAY *display = GetDisplay();
   EFI_MEMORY_DESCRIPTOR *memory_map = NULL;
   UINT64 map_key = 0;
 
@@ -166,7 +177,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     "jmp *%0;"
     :
     :"r"(kernel_buffer),
-    "r"(frame_buffer),
+    "r"(display),
     "r"(memory_map)
   );
   
