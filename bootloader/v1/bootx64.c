@@ -30,7 +30,7 @@ UINT64 FileSize(EFI_FILE_HANDLE file_handle)
   return size;
 }
 
-EFI_STATUS GetMapKey(UINT64 *map_key)
+EFI_STATUS GetMapKey(UINT64 *map_key, EFI_MEMORY_DESCRIPTOR *output_map)
 {
   // Get memory map size and initialize some variables
   EFI_STATUS status;
@@ -61,6 +61,8 @@ EFI_STATUS GetMapKey(UINT64 *map_key)
     Print(L"Could not get memory map: %d\r\n", status);
     return status;
   }
+
+  output_map = memory_map;
 
   return EFI_SUCCESS;
 }
@@ -136,9 +138,10 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   Print(L"Successfully closed file.\r\n");
 
   EFI_PHYSICAL_ADDRESS frame_buffer = GetFrameBuffer();
-
+  EFI_MEMORY_DESCRIPTOR *memory_map = NULL;
   UINT64 map_key = 0;
-  status = GetMapKey(&map_key);
+
+  status = GetMapKey(&map_key, memory_map);
   if(EFI_ERROR(status)){
     Print(L"(ERROR) Could not get memory map. Exit code: %d\r\n", status);
     return status;
@@ -156,10 +159,15 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   // Put frame buffer and memory map as arguments
   // Jmp to kernel code
 
-  asm( // Jump to kernel
-    "jmp *%0"
+  // Prepare for jump to kernel
+  asm(
+    "mov %1, %%rdi;"
+    "mov %2, %%rsi;"
+    "jmp *%0;"
     :
-    :"r"(kernel_buffer)
+    :"r"(kernel_buffer),
+    "r"(frame_buffer),
+    "r"(memory_map)
   );
   
   // Just in case
