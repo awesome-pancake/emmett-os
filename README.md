@@ -1,5 +1,5 @@
-# emmett-os
-Emmett OS
+# Computer Science 30 Capstone Project
+Read the proposal.md file.
 
 ## Instructions
 
