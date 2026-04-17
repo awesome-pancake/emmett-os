@@ -8,27 +8,39 @@ typedef struct{
     uint64_t    virtual_start;
     uint64_t    pages;
     uint64_t    attribute;
-} MEMORY_DESCRIPTOR;
+} EFI_MEMORY_DESCRIPTOR;
 
+// Colour for blt
 typedef struct{
     uint8_t     blue;
     uint8_t     green;
     uint8_t     red;
+    uint8_t     reserved;
 } COLOUR;
 
+// Holds information about the display
 typedef struct{
     uint8_t     *frame_buffer;
     uint32_t    horizontal_resolution;
     uint32_t    vertical_resolution;
 } DISPLAY;
 
+int kernel_main(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map);
+
+// Entry point for the kernel
+void entry_point(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map)
+{
+    kernel_main(display, memory_map);
+    for(;;);
+}
+
+// Fills the screen with grey
 void fill_screen(DISPLAY *display)
 {
     uint8_t *buffer = display->frame_buffer;
     uint32_t width = display->horizontal_resolution;
     uint32_t height = display->vertical_resolution;
 
-    // Fill screen with grey
     for(int y=0; y<height; y++){
         for(int x=0; x<4*width; x++){
             // Avoid reserved bytes
