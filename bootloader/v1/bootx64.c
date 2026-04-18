@@ -89,6 +89,16 @@ DISPLAY *GetDisplay()
   return display;
 }
 
+EFI_STATUS GetEntryPoint(UINT64 header, UINT64 *start)
+{
+  // Reads the entry point for the kernel off of the elf header
+  // TODO: prettify this code, and add error handling
+  UINT64 entry_point = header + 0x18;
+  *start = *(UINT64*)entry_point;
+
+  return EFI_SUCCESS;
+}
+
 EFI_STATUS
 EFIAPI
 efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
@@ -99,7 +109,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   EFI_PHYSICAL_ADDRESS kernel_buffer = 0;
   EFI_FILE_HANDLE volume = GetVolume(ImageHandle);
   EFI_FILE_HANDLE file_handle;
-  CHAR16 *file_name = L"kernel.bin";
+  CHAR16 *file_name = L"kernel.elf";
 
   // Open file
   status = uefi_call_wrapper(volume->Open, 5, volume, &file_handle, file_name, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY | EFI_FILE_HIDDEN | EFI_FILE_SYSTEM);
@@ -148,6 +158,15 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
   Print(L"Successfully closed file.\r\n");
 
+  UINT64 entry_offset = 0;
+  status = GetEntryPoint(kernel_buffer, &entry_offset);
+  if(EFI_ERROR(status)){
+    Print(L"(ERROR) Could not get kernel entry point. Exit code: %d\r\n", status);
+    return status;
+  }
+
+  Print(L"Successfully obtained kernel entry point: %X", entry_offset);
+
   DISPLAY *display = GetDisplay();
   EFI_MEMORY_DESCRIPTOR *memory_map = NULL;
   UINT64 map_key = 0;
@@ -164,13 +183,10 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     Print(L"(ERROR) Could not exit boot services. Exit code: %d\r\n", status);
     return status;
   }
-  
-  // TODO: Pass frame buffer and memory map to the kernel
-  // Set ebp, esp
-  // Put frame buffer and memory map as arguments
-  // Jmp to kernel code
 
   // Prepare for jump to kernel
+  // TODO: make new stack
+  kernel_buffer += entry_offset;
   asm(
     "mov %1, %%rdi;"
     "mov %2, %%rsi;"

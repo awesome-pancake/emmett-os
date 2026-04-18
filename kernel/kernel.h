@@ -10,6 +10,16 @@ typedef struct{
     uint64_t    attribute;
 } EFI_MEMORY_DESCRIPTOR;
 
+// Segment descriptor for the GDT
+typedef struct{
+    uint16_t    limit_w1;
+    uint16_t    base_w1;
+    uint8_t     base_w2;
+    uint8_t     access;
+    uint8_t     flags;
+    uint8_t     base_w3;
+} SEGMENT_DESCRIPTOR;
+
 // Colour for blt
 typedef struct{
     uint8_t     blue;
@@ -25,29 +35,11 @@ typedef struct{
     uint32_t    vertical_resolution;
 } DISPLAY;
 
+// Main kernel function
 int kernel_main(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map);
 
 // Entry point for the kernel
-void entry_point(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map)
-{
-    kernel_main(display, memory_map);
-    for(;;);
-}
+void entry_point(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map);
 
 // Fills the screen with grey
-void fill_screen(DISPLAY *display)
-{
-    uint8_t *buffer = display->frame_buffer;
-    uint32_t width = display->horizontal_resolution;
-    uint32_t height = display->vertical_resolution;
-
-    for(int y=0; y<height; y++){
-        for(int x=0; x<4*width; x++){
-            // Avoid reserved bytes
-            if(x%4 != 4){
-                uint8_t *px = buffer + x + 4*y*width;
-                *px = 0xAA;
-            }
-        }
-    }
-}
+void fill_screen(DISPLAY *display);

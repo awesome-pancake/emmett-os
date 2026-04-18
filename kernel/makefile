@@ -1,3 +1,2 @@
 kernel.bin: kernel.c
-	gcc -Wl,--oformat=binary -c kernel.c
-	objcopy -O binary -j .text kernel.o kernel.bin
+	gcc kernel.c -nostartfiles --entry kernel_main -o kernel.elf
