@@ -38,8 +38,5 @@ typedef struct{
 // Main kernel function
 int kernel_main(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map);
 
-// Entry point for the kernel
-void entry_point(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map);
-
 // Fills the screen with grey
 void fill_screen(DISPLAY *display);

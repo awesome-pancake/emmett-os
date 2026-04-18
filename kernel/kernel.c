@@ -1,13 +1,5 @@
 #include "kernel.h"
 
-// int main(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map)
-// {
-//     kernel_main(display, memory_map);
-//     for(;;);
-
-//     return 0;
-// }
-
 void fill_screen(DISPLAY *display)
 {
     uint8_t *buffer = display->frame_buffer;
