@@ -7,9 +7,11 @@ int kernel_main(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map)
     asm("cli");
 
     cls(display);
-    prints(display, "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOGS, the quick brown fox jumped over the lazy dogs. 123456789; {hello}");
+    prints(display, "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOGS, the quick brown fox jumped over the lazy dogs.");
     
-    for(;;);
+    for(;;){
+        asm("hlt");
+    }
 }
 
 int fill_screen(DISPLAY *display, DISPLAY_COLOUR colour)
@@ -45,7 +47,7 @@ int cls(DISPLAY *display)
     return fill_screen(display, black);
 }
 
-int printc(DISPLAY *display, char c, uint8_t offset)
+int printc(DISPLAY *display, unsigned char c, uint8_t offset)
 {
     // Initialize some values
     uint8_t *bf = display->frame_buffer;

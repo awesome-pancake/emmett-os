@@ -65,7 +65,7 @@ int fill_screen(DISPLAY *display, DISPLAY_COLOUR colour);
 int cls(DISPLAY *display);
 
 // Displays a character
-int printc(DISPLAY *display, char c, uint8_t offset);
+int printc(DISPLAY *display, unsigned char c, uint8_t offset);
 
 // Prints a null terminated string
 int prints(DISPLAY *display, char *str);
