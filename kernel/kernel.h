@@ -46,6 +46,15 @@ typedef struct{
     uint32_t    vertical_resolution;
 } DISPLAY;
 
+// Holds state of the console
+typedef struct{
+    DISPLAY             *display;
+    uint8_t             cursor_x;
+    uint8_t             cursor_y;
+    DISPLAY_COLOUR      back_colour;
+    DISPLAY_COLOUR      text_colour;
+} CONSOLE;
+
 /* Text Processing */
 
 // Font information
@@ -53,19 +62,21 @@ typedef struct{
     uint8_t     rows[128][16];
 } FONT;
 
-/* Functions */
-
 // Main kernel function
 int kernel_main(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map);
 
-// Fills the screen with grey
+/* Graphics */
+
+// Fills the screen with a given colour
 int fill_screen(DISPLAY *display, DISPLAY_COLOUR colour);
 
 // Clears the screen
-int cls(DISPLAY *display);
+int cls(CONSOLE *console);
+
+/* Console */
 
 // Displays a character
-int printc(DISPLAY *display, unsigned char c, uint8_t offset);
+int printc(CONSOLE *console, uint8_t c);
 
 // Prints a null terminated string
-int prints(DISPLAY *display, char *str);
+int prints(CONSOLE *console, uint8_t *str);
