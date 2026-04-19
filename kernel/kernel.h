@@ -1,4 +1,11 @@
 #include <stdint.h>
+#include <stdbool.h>
+
+#ifndef KERNEL_H
+    #define KERNEL_H 1
+#endif
+
+/* UEFI */
 
 // EFI memory descriptor
 typedef struct{
@@ -10,6 +17,8 @@ typedef struct{
     uint64_t    attribute;
 } EFI_MEMORY_DESCRIPTOR;
 
+/* Memory Management */
+
 // Segment descriptor for the GDT
 typedef struct{
     uint16_t    limit_w1;
@@ -20,13 +29,15 @@ typedef struct{
     uint8_t     base_w3;
 } SEGMENT_DESCRIPTOR;
 
-// Colour for blt
+/* Console and Display */
+
+// Colour for frame buffer
 typedef struct{
     uint8_t     blue;
     uint8_t     green;
     uint8_t     red;
     uint8_t     reserved;
-} COLOUR;
+} DISPLAY_COLOUR;
 
 // Holds information about the display
 typedef struct{
@@ -35,8 +46,26 @@ typedef struct{
     uint32_t    vertical_resolution;
 } DISPLAY;
 
+/* Text Processing */
+
+// Font information
+typedef struct{
+    uint8_t     rows[128][16];
+} FONT;
+
+/* Functions */
+
 // Main kernel function
 int kernel_main(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map);
 
 // Fills the screen with grey
-void fill_screen(DISPLAY *display);
+int fill_screen(DISPLAY *display, DISPLAY_COLOUR colour);
+
+// Clears the screen
+int cls(DISPLAY *display);
+
+// Displays a character
+int printc(DISPLAY *display, char c, uint8_t offset);
+
+// Prints a null terminated string
+int prints(DISPLAY *display, char *str);
