@@ -7,7 +7,7 @@ int kernel_main(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map)
     asm("cli");
 
     cls(display);
-    prints(display, "\"'()");
+    prints(display, "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOGS, the quick brown fox jumped over the lazy dogs. 123456789; {hello}");
     
     for(;;);
 }
