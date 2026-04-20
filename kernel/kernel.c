@@ -25,7 +25,8 @@ int kernel_main(DISPLAY *display, EFI_MEMORY_DESCRIPTOR *memory_map)
     };
 
     cls(&console);
-    prints(&console, "Hello world from the kernel!");
+    prints(&console, "Hello world from the kernel! BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH\n\r");
+    prints(&console, "Hello again! 0123456789 {} () [] | ~ ` ' \\ // C:/Users/Emmett !@#$%^&*-+_=");
     
     for(;;){
         asm("hlt");
@@ -41,7 +42,7 @@ int fill_screen(DISPLAY *display, DISPLAY_COLOUR colour)
     // for(int y=0; y<height; y++){
     //     for(int x=0; x<width; x++){
     //         // Get pointer to current pixel
-    //         DISPLAY_COLOUR *px = (DISPLAY_COLOUR*)(bf + 4*(y*width + x));
+    //         DISPLAY_COLOUR *px = (DISPLAY_COLOUR*)(bf + sizeof(DISPLAY_COLOUR)*(y*width + x));
 
     //         // Fill pixel
     //         px->reserved = 0;
@@ -83,13 +84,13 @@ int printc(CONSOLE *console, uint8_t c)
     for(uint8_t y=0; y<16; y++){
         for(uint8_t x=0; x<8; x++){
             // Offset from start address of framebuffer
-            int offset = 4*(y*width + console->cursor_y*width + x + 8*console->cursor_x);
+            int offset = sizeof(DISPLAY_COLOUR)*(y*width + FONT_HEIGHT*console->cursor_y*width + x + FONT_WIDTH*console->cursor_x);
 
             // Pixel pointer
             DISPLAY_COLOUR *px = (DISPLAY_COLOUR*)(bf + offset);
 
             // Bitwise operations to determine if the current pixel is lit
-            DISPLAY_COLOUR px_colour = (fixedsys.rows[c][y] & (0x80 >> x)) != 0 ? console->text_colour : console->back_colour;
+            DISPLAY_COLOUR px_colour = (FIXEDSYS.rows[c][y] & (0x80 >> x)) != 0 ? console->text_colour : console->back_colour;
 
             // Draw the pixel
             px->reserved = 0;
@@ -98,7 +99,25 @@ int printc(CONSOLE *console, uint8_t c)
             px->red = px_colour.red;
         }
     }
-    console->cursor_x++;
+
+    // Determine the new position of the cursor
+    switch(c){
+        case '\n':
+            console->cursor_y++;
+            break;
+        case '\r':
+            console->cursor_x = 0;
+            break;
+        default:
+            if(console->cursor_x + 1 == width/FONT_WIDTH){
+                console->cursor_x = 0;
+                console->cursor_y++;
+            } else {
+                console->cursor_x++;
+            }
+            break;
+    }
+
     return 0;
 }
 
