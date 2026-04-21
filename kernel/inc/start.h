@@ -1,21 +1,22 @@
 #include <stdint.h>
-#include <stdbool.h>
 
 #ifndef KERNEL_ENTRY
     #define KERNEL_ENTRY 1
 #endif
 
-/* UEFI */
+
+/* UEFI and boot */
 
 // EFI memory descriptor
 struct efi_memory_descriptor{
     uint32_t    type;
-    uint32_t    pad;
+    uint32_t    padding;
     uint64_t    physical_start;
     uint64_t    virtual_start;
     uint64_t    pages;
     uint64_t    attribute;
 };
+
 
 /* Memory Management */
 
@@ -29,7 +30,13 @@ struct segment_descriptor {
     uint8_t     base_w3;
 };
 
+
 /* Console and Display */
+
+// Font information
+struct font{
+    uint8_t     rows[128][16];
+};
 
 // Colour for frame buffer
 struct display_colour {
@@ -46,8 +53,16 @@ struct display{
     uint32_t    vertical_resolution;
 };
 
+// Holds state of the console
+struct console_state {
+    struct display              *display;
+    uint8_t                     cursor_x;
+    uint8_t                     cursor_y;
+    struct display_colour       back_colour;
+    struct display_colour       text_colour;
+};
+
+
+
 // Main kernel function
 int kernel_main(struct display *disp, struct efi_memory_descriptor *memory_map);
-
-// Fills the screen with a given colour
-int fill_screen(struct display *disp, struct display_colour colour);

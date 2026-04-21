@@ -1,5 +1,6 @@
-#include "inc/start.h"
-#include "inc/console.h"
+#include <start.h>
+#include <console.h>
+#include <memory.h>
 
 int kernel_main(struct display *disp, struct efi_memory_descriptor *memory_map)
 {
@@ -26,7 +27,11 @@ int kernel_main(struct display *disp, struct efi_memory_descriptor *memory_map)
 
     cls(&console);
     prints(&console, "Hello world from the kernel! BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH\n\r");
-    prints(&console, "Hello again! 0123456789 {} () [] | ~ ` ' \\ // C:/Users/Emmett !@#$%^&*-+_=");
+    prints(&console, "Hello again! 0123456789 {} () [] | ~ ` ' \\ // C:/Users/Emmett !@#$%^&*-+_=\n\r");
+    printn(&console, 65537);
+    prints(&console, "\n\r");
+
+    display_mem(&console, memory_map);
     
     for(;;){
         asm("hlt");
@@ -123,11 +128,37 @@ int printc(struct console_state *console, uint8_t c)
 
 int prints(struct console_state *console, uint8_t *str)
 {
-    // Naive print function
     int i = 0;
     while(str[i] != '\0'){
         printc(console, str[i]);
         i++;
     }
+    return 0;
+}
+
+int printn(struct console_state *console, uint64_t num)
+{
+    char nib_to_hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    char hex_string[11] = {'0', 'x'};
+
+    for(int x=0; x<8; x++){
+        unsigned char nibble = ((0xF0000000>>(4*x)) & num) >> (4*(7-x));
+        hex_string[x+2] = nib_to_hex[nibble];
+    }
+
+    return prints(console, hex_string);
+}
+
+int display_mem(struct console_state *console, struct efi_memory_descriptor *memory_map)
+{
+    // TODO: Remove this function
+    printn(console, memory_map[1].type);
+    prints(console, "\n\r");
+    printn(console, memory_map[1].pages);
+    prints(console, "\n\r");
+    printn(console, memory_map[1].physical_start);
+    prints(console, "\n\r");
+    printn(console, memory_map[1].virtual_start);
+
     return 0;
 }
