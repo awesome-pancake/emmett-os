@@ -37,7 +37,7 @@ UINT64 FileSize(EFI_FILE_HANDLE file_handle)
   return size;
 }
 
-EFI_STATUS GetMapKey(UINT64 *map_key, EFI_MEMORY_DESCRIPTOR *output_map)
+EFI_STATUS GetMapKey(UINT64 *map_key, EFI_MEMORY_DESCRIPTOR **output_map)
 {
   // Get memory map size and initialize some variables
   EFI_STATUS status;
@@ -46,7 +46,8 @@ EFI_STATUS GetMapKey(UINT64 *map_key, EFI_MEMORY_DESCRIPTOR *output_map)
   UINTN descriptor_size = 0;
   UINT32 descriptor_version = 0;
 
-  status = uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size, &memory_map, NULL, &descriptor_size, NULL);
+  // The first call to GetMemoryMap is expected to fail
+  status = uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size, *output_map, NULL, &descriptor_size, NULL);
   if(status != EFI_BUFFER_TOO_SMALL && status != EFI_SUCCESS){
     Print(L"Could not get memory map size: %d\r\n", status);
     return status;
@@ -56,20 +57,18 @@ EFI_STATUS GetMapKey(UINT64 *map_key, EFI_MEMORY_DESCRIPTOR *output_map)
   map_size += 2 * descriptor_size;
 
   // Allocate space for memory map
-  status = uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, map_size, (void **)&memory_map);
+  status = uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, map_size, (void **)output_map);
   if(EFI_ERROR(status)){
     Print(L"Could not allocate memory map: %d\r\n", status);
     return status;
   }
 
   // Get memory map
-  status = uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size, memory_map, map_key, &descriptor_size, &descriptor_version);
+  status = uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size, *output_map, map_key, &descriptor_size, &descriptor_version);
   if(EFI_ERROR(status)){
     Print(L"Could not get memory map: %d\r\n", status);
     return status;
   }
-
-  output_map = memory_map;
 
   return EFI_SUCCESS;
 }
@@ -171,7 +170,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   EFI_MEMORY_DESCRIPTOR *memory_map = NULL;
   UINT64 map_key = 0;
 
-  status = GetMapKey(&map_key, memory_map);
+  status = GetMapKey(&map_key, &memory_map);
   if(EFI_ERROR(status)){
     Print(L"(ERROR) Could not get memory map. Exit code: %d\r\n", status);
     return status;
