@@ -4,9 +4,10 @@
 
 int kernel_main(struct display *disp, struct efi_memory_descriptor *memory_map)
 {
-    // Ensure that no hardware interrupts are generated
+    // Ensure that no hardware interrupts are generated during kernel setup
     asm("cli");
 
+    // Initialize console state
     struct console_state console = {
         .display = disp,
         .cursor_x = 0,
@@ -26,13 +27,11 @@ int kernel_main(struct display *disp, struct efi_memory_descriptor *memory_map)
     };
 
     cls(&console);
-    prints(&console, "Hello world from the kernel! BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH\n\r");
-    prints(&console, "Hello again! 0123456789 {} () [] | ~ ` ' \\ // C:/Users/Emmett !@#$%^&*-+_=\n\r");
-    printn(&console, 65537);
-    prints(&console, "\n\r");
+    prints(&console, "Emmett OS Kernel successfully initiated.\n\r");
 
     display_mem(&console, memory_map);
     
+    // Catches execution and ensures no undefined code is executed
     for(;;){
         asm("hlt");
     }
@@ -108,15 +107,16 @@ int printc(struct console_state *console, uint8_t c)
     // Determine the new position of the cursor
     switch(c){
         case '\n':
-            console->cursor_y++;
+            console->cursor_y += (console->cursor_y + 1 == height/FONT_HEIGHT) ? 0 : 1;
             break;
         case '\r':
             console->cursor_x = 0;
             break;
         default:
+            // Move the cursor forward normally
             if(console->cursor_x + 1 == width/FONT_WIDTH){
                 console->cursor_x = 0;
-                console->cursor_y++;
+                console->cursor_y += (console->cursor_y + 1 == height/FONT_HEIGHT) ? 0 : 1;
             } else {
                 console->cursor_x++;
             }
@@ -151,14 +151,23 @@ int printn(struct console_state *console, uint64_t num)
 
 int display_mem(struct console_state *console, struct efi_memory_descriptor *memory_map)
 {
-    // TODO: Remove this function
-    printn(console, memory_map[1].type);
-    prints(console, "\n\r");
-    printn(console, memory_map[1].pages);
-    prints(console, "\n\r");
-    printn(console, memory_map[1].physical_start);
-    prints(console, "\n\r");
-    printn(console, memory_map[1].virtual_start);
+    prints(console, "Type:      ");
+    prints(console, "Pages:     ");
+    prints(console, "Physical:  ");
+    prints(console, "Virtual:   \n\r");
+
+    // Display every memory descriptor
+    // TODO: there is clearly a byte alignment issue with this loop, so it needs to be fixed.
+    for(int i=0; i<4; i++){
+        printn(console, memory_map[i].type);
+        printc(console, ' ');
+        printn(console, memory_map[i].pages);
+        printc(console, ' ');
+        printn(console, memory_map[i].physical_start);
+        printc(console, ' ');
+        printn(console, memory_map[i].virtual_start);
+        prints(console, "\n\r");
+    }
 
     return 0;
 }
