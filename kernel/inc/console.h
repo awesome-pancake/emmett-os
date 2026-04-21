@@ -1,12 +1,35 @@
-#ifndef KERNEL_H
-    #include "kernel.h"
+#ifndef KERNEL_ENTRY
+    #include "inc/start.h"
 #endif
+
+// Font information
+struct font{
+    uint8_t     rows[128][16];
+};
+
+// Holds state of the console
+struct console_state {
+    struct display              *display;
+    uint8_t                     cursor_x;
+    uint8_t                     cursor_y;
+    struct display_colour       back_colour;
+    struct display_colour       text_colour;
+};
+
+// Clears the screen
+int cls(struct console_state *console);
+
+// Displays a character
+int printc(struct console_state *console, uint8_t c);
+
+// Prints a null terminated string
+int prints(struct console_state *console, uint8_t *str);
 
 const uint16_t FONT_HEIGHT = 16;
 const uint16_t FONT_WIDTH = 8;
 
 // ASCII raster font
-const FONT FIXEDSYS = {{
+const struct font FIXEDSYS = {{
     {0x00, 0x00, 0x00, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x00, 0x00, 0x00, 0x00},
     {0x00, 0x00, 0x00, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x00, 0x00, 0x00, 0x00},
     {0x00, 0x00, 0x00, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x8E, 0x00, 0x00, 0x00, 0x00},
