@@ -8,6 +8,11 @@ typedef struct{
     uint32_t    vertical_resolution;
 } DISPLAY;
 
+typedef struct{
+    EFI_MEMORY_DESCRIPTOR           *descriptor_table;
+    uint64_t                        map_size;
+} KERNEL_MEMMAP;
+
 EFI_FILE_HANDLE GetVolume(EFI_HANDLE image)
 {
   EFI_LOADED_IMAGE *loaded_image = NULL;
@@ -37,7 +42,7 @@ UINT64 FileSize(EFI_FILE_HANDLE file_handle)
   return size;
 }
 
-EFI_STATUS GetMapKey(UINT64 *map_key, EFI_MEMORY_DESCRIPTOR **output_map)
+EFI_STATUS GetMapKey(UINT64 *map_key, UINTN *size, EFI_MEMORY_DESCRIPTOR **output_map)
 {
   // Get memory map size and initialize some variables
   EFI_STATUS status;
@@ -69,6 +74,8 @@ EFI_STATUS GetMapKey(UINT64 *map_key, EFI_MEMORY_DESCRIPTOR **output_map)
     Print(L"Could not get memory map: %d\r\n", status);
     return status;
   }
+
+  *size = map_size;
 
   return EFI_SUCCESS;
 }
@@ -167,14 +174,19 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   Print(L"Successfully obtained kernel entry point: %X", entry_offset);
 
   DISPLAY *display = GetDisplay();
-  EFI_MEMORY_DESCRIPTOR *memory_map = NULL;
+  EFI_MEMORY_DESCRIPTOR *descriptor_table = NULL;
+  UINTN map_size = 0;
   UINT64 map_key = 0;
+  KERNEL_MEMMAP memory_map;
 
-  status = GetMapKey(&map_key, &memory_map);
+  status = GetMapKey(&map_key, &map_size, &descriptor_table);
   if(EFI_ERROR(status)){
     Print(L"(ERROR) Could not get memory map. Exit code: %d\r\n", status);
     return status;
   }
+
+  memory_map.map_size = map_size;
+  memory_map.descriptor_table = descriptor_table;
 
   // Exit boot services
   status = uefi_call_wrapper(BS->ExitBootServices, 2, ImageHandle, map_key);
@@ -193,7 +205,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     :
     :"r"(kernel_buffer),
     "r"(display),
-    "r"(memory_map)
+    "r"(&memory_map)
   );
   
   // Just in case

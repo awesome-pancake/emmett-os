@@ -10,13 +10,20 @@
 // EFI memory descriptor
 struct efi_memory_descriptor{
     uint32_t    type;
-    uint32_t    padding;
+    uint32_t    paddingl;
     uint64_t    physical_start;
     uint64_t    virtual_start;
     uint64_t    pages;
     uint64_t    attribute;
+    uint64_t    paddingh;
 };
 
+const int DESCRIPTOR_SIZE = sizeof(struct efi_memory_descriptor);
+
+struct memory_map{
+    struct efi_memory_descriptor    *descriptor_table;
+    uint64_t                        map_size;
+};
 
 /* Memory Management */
 
@@ -65,4 +72,4 @@ struct console_state {
 
 
 // Main kernel function
-int kernel_main(struct display *disp, struct efi_memory_descriptor *memory_map);
+int kernel_main(struct display *disp, struct memory_map *memory_map);

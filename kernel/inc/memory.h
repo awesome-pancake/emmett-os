@@ -4,4 +4,4 @@
 #endif
 
 // Displays the memmap
-int display_mem(struct console_state *console, struct efi_memory_descriptor *memory_map);
+int display_mem(struct console_state *console, struct memory_map *memory_map);
