@@ -18,8 +18,6 @@ struct efi_memory_descriptor{
     uint64_t    paddingh;
 };
 
-const int DESCRIPTOR_SIZE = sizeof(struct efi_memory_descriptor);
-
 struct memory_map{
     struct efi_memory_descriptor    *descriptor_table;
     uint64_t                        map_size;
