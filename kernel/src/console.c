@@ -1,12 +1,44 @@
 #include <console.h>
 
-int cls(struct console_state *console)
-{
+int fill_screen(struct display *disp, struct display_colour colour) {
+    uint8_t *bf = disp->frame_buffer;
+    uint32_t width = disp->horizontal_resolution;
+    uint32_t height = disp->vertical_resolution;
+
+    // for(int y=0; y<height; y++){
+    //     for(int x=0; x<width; x++){
+    //         // Get pointer to current pixel
+    //         DISPLAY_COLOUR *px = (DISPLAY_COLOUR*)(bf + sizeof(DISPLAY_COLOUR)*(y*width + x));
+
+    //         // Fill pixel
+    //         px->reserved = 0;
+    //         px->blue = colour.blue;
+    //         px->green = colour.green;
+    //         px->red = colour.red;
+    //     }
+    // }
+
+    // Optimized version of the commented code
+    uint32_t pixels = width * height;
+    asm volatile(
+        "movl (%2), %%eax;"
+        "movl %1, %%ecx;"
+        "movq %0, %%rdi;"
+        "cld;"
+        "rep stosl;"
+        :
+        : "r"(bf), "r"(pixels), "r"(&colour)
+        : "rax", "rcx", "rdi"
+    );
+
+    return 0;
+}
+
+int cls(struct console_state *console) {
     return fill_screen(console->display, console->back_colour);
 }
 
-int printc(struct console_state *console, uint8_t c)
-{
+int printc(struct console_state *console, char c) {
     // Frame buffer and related helpful constants
     uint8_t *bf = console->display->frame_buffer;
     uint32_t width = console->display->horizontal_resolution;
@@ -22,7 +54,7 @@ int printc(struct console_state *console, uint8_t c)
             struct display_colour *px = (struct display_colour*)(bf + offset);
 
             // Bitwise operations to determine if the current pixel is lit
-            struct display_colour px_colour = (FIXEDSYS.rows[c][y] & (0x80 >> x)) != 0 ? console->text_colour : console->back_colour;
+            struct display_colour px_colour = (FIXEDSYS.rows[(uint8_t)c][y] & (0x80 >> x)) != 0 ? console->text_colour : console->back_colour;
 
             // Draw the pixel
             px->reserved = 0;
@@ -54,8 +86,7 @@ int printc(struct console_state *console, uint8_t c)
     return 0;
 }
 
-int prints(struct console_state *console, uint8_t *str)
-{
+int prints(struct console_state *console, char *str) {
     int i = 0;
     while(str[i] != '\0'){
         printc(console, str[i]);
@@ -64,8 +95,7 @@ int prints(struct console_state *console, uint8_t *str)
     return 0;
 }
 
-int printn(struct console_state *console, uint64_t num)
-{
+int printn(struct console_state *console, uint64_t num) {
     // Uses the accumulator pattern to convert a number into a hexadecimal string
     char nib_to_hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
     char hex_string[19] = {'0', 'x'};

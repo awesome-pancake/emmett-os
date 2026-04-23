@@ -3,8 +3,7 @@
 
 const int DESCRIPTOR_SIZE = sizeof(struct efi_memory_descriptor);
 
-int display_mem(struct console_state *console, struct memory_map *memory_map)
-{
+int display_mem(struct console_state *console, struct efi_memory_map *memory_map) {
     // Some title stuff
     prints(console, "Type:              ");
     prints(console, "Physical Start:    ");

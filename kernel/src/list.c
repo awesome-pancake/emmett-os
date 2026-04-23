@@ -1,7 +1,6 @@
 #include <list.h>
 
-int list_add(struct list *new, struct list *head)
-{
+int list_add(struct list *new, struct list *head) {
     // Set new pointers
     new->bk = head;
     new->fd = head->fd;
@@ -12,8 +11,7 @@ int list_add(struct list *new, struct list *head)
     return 0;
 }
 
-int list_add_tail(struct list *new, struct list *head)
-{
+int list_add_tail(struct list *new, struct list *head) {
     // Set new pointers
     new->fd = head;
     new->bk = head->bk;

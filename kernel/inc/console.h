@@ -9,10 +9,10 @@ int fill_screen(struct display *disp, struct display_colour colour);
 int cls(struct console_state *console);
 
 // Displays a character
-int printc(struct console_state *console, uint8_t c);
+int printc(struct console_state *console, char c);
 
 // Prints a null terminated string
-int prints(struct console_state *console, uint8_t *str);
+int prints(struct console_state *console, char *str);
 
 // Prints a number
 int printn(struct console_state *console, uint64_t num);

@@ -18,7 +18,7 @@ struct efi_memory_descriptor{
     uint64_t    paddingh;
 };
 
-struct memory_map{
+struct efi_memory_map{
     struct efi_memory_descriptor    *descriptor_table;
     uint64_t                        map_size;
 };
@@ -67,7 +67,5 @@ struct console_state {
     struct display_colour       text_colour;
 };
 
-
-
 // Main kernel function
-int kernel_main(struct display *disp, struct memory_map *memory_map);
+int kernel_main(struct display *disp, struct efi_memory_map *memory_map);
