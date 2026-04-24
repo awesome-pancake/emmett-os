@@ -4,11 +4,15 @@ Through this project I hoped to learn how to make programs that were capable of 
 
 ## Needs to Have
 - Bootable on a computer without an operating system without breaking
-- Management of various low-level aspects of a system, such as interrupts
+- Management of various low-level aspects of a system:
+    - System interrupts
+    - Global descriptor table
+    - Paging and memory virtualisation
 - User I/O (keyboard, screen)
 - Methods for string output
 - Memory management functions
-- Effective abstraction of some low-level details
+    - Macro memory management (virtual memory and paging)
+    - Heap management
 
 ## Nice to Have
 - Can parse filesystems, read files into memory

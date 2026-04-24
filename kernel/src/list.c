@@ -21,3 +21,11 @@ int list_add_tail(struct list *new, struct list *head) {
     head->bk = new;
     return 0;
 }
+
+int list_delete(struct list *head) {
+    // Set other pointers
+    head->fd->bk = head->bk;
+    head->bk->fd = head->fd;
+
+    return 0;
+}

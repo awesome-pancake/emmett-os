@@ -37,6 +37,8 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     struct memory_map *memory_map = (struct memory_map*)efi_alloc_page(efi_memory_map);
     init_memory_map(&console, efi_memory_map, memory_map);
     display_mem(&console, memory_map);
+
+    
     
     // Catches execution and ensures no undefined code is executed
     for(;;){

@@ -98,3 +98,22 @@ struct memory_map *init_memory_map(struct console_state *console, struct efi_mem
 
     return map_head;
 }
+
+void *alloc_page(struct memory_map *memory_map, enum memory_type type) {
+
+    void *page_ptr = NULL;
+    struct memory_map *curr_node = memory_map;
+
+    do {
+        if(curr_node->type == AVAILABLE){
+            page_ptr = (void*)curr_node->physical_address;
+
+            // Commented until heap is possible
+            // curr_node->type = type;
+        }
+        curr_node = (struct memory_map*)curr_node->list.fd;
+
+    } while (curr_node != memory_map && page_ptr == NULL);
+
+    return page_ptr;
+}

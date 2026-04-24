@@ -56,3 +56,5 @@ void *efi_alloc_page(struct efi_memory_map *memory_map);
 
 // Initializes the kernel memory map
 struct memory_map *init_memory_map(struct console_state *console, struct efi_memory_map *memory_map, struct memory_map *ptr);
+
+void *alloc_page(struct memory_map *memory_map, enum memory_type type);
