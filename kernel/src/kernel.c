@@ -6,7 +6,7 @@
     #include <list.h>
 #endif
 
-int kernel_main(struct display *disp, struct efi_memory_map *memory_map) {
+int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     // Ensure that no hardware interrupts are generated during kernel setup
     asm("cli");
 
@@ -29,9 +29,13 @@ int kernel_main(struct display *disp, struct efi_memory_map *memory_map) {
         }
     };
 
+    // Clear the console
     cls(&console);
     prints(&console, "Kernel successfully loaded.\n\r");
-
+    
+    // Initialize kernel memory map
+    struct memory_map *memory_map = (struct memory_map*)efi_alloc_page(efi_memory_map);
+    init_memory_map(&console, efi_memory_map, memory_map);
     display_mem(&console, memory_map);
     
     // Catches execution and ensures no undefined code is executed

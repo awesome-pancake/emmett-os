@@ -1,2 +1,2 @@
-kernel.bin: kernel.c
-	gcc -Wall kernel.c src/*.c -I inc -nostartfiles --entry kernel_main -o kernel.elf
+kernel.elf: src/kernel.c
+	gcc -Wall src/*.c -I inc -nostartfiles --entry kernel_main -o kernel.elf

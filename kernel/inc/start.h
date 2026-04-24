@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 
 #ifndef KERNEL_ENTRY
     #define KERNEL_ENTRY 1
@@ -6,6 +7,26 @@
 
 
 /* UEFI and boot */
+
+typedef enum {
+    EfiReservedMemoryType, 
+    EfiLoaderCode, 
+    EfiLoaderData, 
+    EfiBootServicesCode, 
+    EfiBootServicesData, 
+    EfiRuntimeServicesCode, 
+    EfiRuntimeServicesData, 
+    EfiConventionalMemory, 
+    EfiUnusableMemory, 
+    EfiACPIReclaimMemory, 
+    EfiACPIMemoryNVS, 
+    EfiMemoryMappedIO, 
+    EfiMemoryMappedIOPortSpace, 
+    EfiPalCode, 
+    EfiPersistentMemory, 
+    EfiUnacceptedMemoryType, 
+    EfiMaxMemoryType
+} EFI_MEMORY_TYPE;
 
 // EFI memory descriptor
 struct efi_memory_descriptor{
