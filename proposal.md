@@ -1,6 +1,6 @@
-# Capstone Project Descriptions
+# Capstone Project Description
 
-Through this project I hoped to learn how to make programs that were capable of booting and running on a computer without an operating system. To accomplish this, I set a goal to write a "microkernel" that manages several aspects that an operating system would. This will likely not be a fully-featured operating system, but instead a kernel.
+Through this project I hoped to learn how to make programs that were capable of booting and running on a computer without an operating system. To accomplish this, I set a goal to write a "microkernel" that manages several aspects that an operating system would. This will likely not be a fully-featured operating system due to time constaints, but instead a small-scale bootable program that does similar things to an operating system. Here the name "Emmett OS" is more of a tongue-in-cheek joke than an accurate description of the project.
 
 ## Needs to Have
 - Bootable on a computer without an operating system without breaking
