@@ -28,92 +28,94 @@ int display_efi_mem(struct console_state *console, struct efi_memory_map *memory
     return 0;
 }
 
-int display_mem(struct console_state *console, struct memory_map *memory_map) {
+int display_mem(struct console_state *console, struct mem_header *memory_map) {
 
-    struct memory_map *curr_node = memory_map;
+    struct mem_header *curr_node = memory_map;
 
+    prints(console, "Start:             Size:             \n\r");
     do {
         // Iterates through the memory map, displaying every entry
-        printn(console, curr_node->physical_address);
+        printn(console, (uint64_t)curr_node);
+        printc(console, ' ');
+        printn(console, curr_node->size);
         prints(console, "\n\r");
-        curr_node = (struct memory_map*)curr_node->list.fd;
+        curr_node = (struct mem_header*)curr_node->fd;
 
     } while (curr_node != memory_map);
 
     return 0;
 }
 
-struct heap_state *init_heap(void* ptr, int page_size) {
+struct mem_header *init_memory_map(struct efi_memory_map *memory_map) {
 
-    // Find pointers to state and start location of heap
-    struct heap_state *state_ptr = (struct heap_state*)ptr;
-    struct memory_chunk *heap_ptr = (struct memory_chunk*)(ptr + sizeof(struct heap_state));
-
-    // Set heap state
-    state_ptr->flags = 0;
-    state_ptr->top_chunk = heap_ptr;
-    state_ptr->bins[0] = heap_ptr;
-
-    return state_ptr;
-}
-
-void *efi_alloc_page(struct efi_memory_map *memory_map) {
-    void *output_ptr = NULL;
     uint32_t current_type = 0;
-    int i = -1;
+    int page_id = -1;
 
     // Iteratively search the memory map
-    while(current_type != EfiConventionalMemory && i+1<memory_map->map_size/DESCRIPTOR_SIZE){
-        i++;
-        current_type = memory_map->descriptor_table[i].type;
+    while(current_type != EfiConventionalMemory && page_id+1<memory_map->map_size/DESCRIPTOR_SIZE){
+        page_id++;
+        current_type = memory_map->descriptor_table[page_id].type;
     }
-    output_ptr = (void*)memory_map->descriptor_table[i].physical_start;
-
-    return output_ptr;
-}
-
-struct memory_map *init_memory_map(struct console_state *console, struct efi_memory_map *memory_map, struct memory_map *ptr) {
     
     // Initialize linked list
-    struct memory_map *map_head = ptr;
-    struct memory_map *curr_node = map_head;
-    map_head->list.fd = &map_head->list;
-    map_head->list.bk = &map_head->list;
+    struct mem_header *map_head = (struct mem_header*)memory_map->descriptor_table[page_id].physical_start;
+    struct mem_header *curr_node = map_head;
+    struct mem_header *new_node = NULL;
+
+    curr_node->fd = map_head;
+    curr_node->bk = map_head;
 
     // Iterate through the efi memory map, adding a linked list node for every descriptor
     for(int i=0; i<memory_map->map_size/DESCRIPTOR_SIZE; i++){
 
-        // Determine the address and data of the new node
-        struct memory_map *new_node = ptr + i*sizeof(struct memory_map);
-        new_node->physical_address = memory_map->descriptor_table[i].physical_start;
-        new_node->virtual_address = memory_map->descriptor_table[i].virtual_start;
-        new_node->pages = memory_map->descriptor_table[i].pages;
-        new_node->pid = 0;
-        // TODO: convert from efi memory type to kernel memory type
+        // Initialize new header at start of available memory chunk
+        if(memory_map->descriptor_table[i].type == EfiConventionalMemory){
+            new_node = (struct mem_header*)memory_map->descriptor_table[i].physical_start;
+            new_node->size = memory_map->descriptor_table[i].pages;
+            new_node->type = AVAILABLE;
+            new_node->pid = 0;
 
-        list_add(&new_node->list, &curr_node->list);
+            // Connect to other headers
+            new_node->bk = curr_node;
+            new_node->fd = map_head;
+            curr_node->fd = new_node;
+            map_head->bk = new_node;
 
-        curr_node = new_node;
+            // Move current node
+            curr_node = new_node;
+        }
     }
 
     return map_head;
 }
 
-void *alloc_page(struct memory_map *memory_map, enum memory_type type) {
+void* allocate_pages(struct console_state *console, struct mem_header *memory_map, int pages) {
 
-    void *page_ptr = NULL;
-    struct memory_map *curr_node = memory_map;
+    void *output_ptr = NULL;
+    struct mem_header *curr_node = memory_map;
 
+    // Find available chunks of adequate size
     do {
-        if(curr_node->type == AVAILABLE){
-            page_ptr = (void*)curr_node->physical_address;
 
-            // Commented until heap is possible
-            // curr_node->type = type;
+        if(curr_node->size > pages){ // Set new header for rest of chunk
+
+            output_ptr = (void*)&curr_node->fd; // Gives address to overwrite pointers but not metadata
+            break;
+        } 
+        else if (curr_node->size == pages) { // Link forward and backwards headers
+
+            prints(console, "Yes! This one works!\n\r");
+
+            output_ptr = (void*)&curr_node->fd;
+
+            curr_node->fd->bk = curr_node->bk;
+            curr_node->bk->fd = curr_node->fd;
+
+            break;
         }
-        curr_node = (struct memory_map*)curr_node->list.fd;
+        curr_node = (struct mem_header*)curr_node->fd;
 
-    } while (curr_node != memory_map && page_ptr == NULL);
+    } while (curr_node != memory_map);
 
-    return page_ptr;
+    return output_ptr;
 }

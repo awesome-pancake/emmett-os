@@ -33,12 +33,11 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     cls(&console);
     prints(&console, "Kernel successfully loaded.\n\r");
     
-    // Initialize kernel memory map
-    struct memory_map *memory_map = (struct memory_map*)efi_alloc_page(efi_memory_map);
-    init_memory_map(&console, efi_memory_map, memory_map);
-    display_mem(&console, memory_map);
+    // Initialize available memory allocation system
+    struct mem_header *memory_map = init_memory_map(efi_memory_map);
 
-    
+    allocate_pages(&console, memory_map, 0x3FF00);
+    display_mem(&console, memory_map);
     
     // Catches execution and ensures no undefined code is executed
     for(;;){
