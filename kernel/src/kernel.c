@@ -36,7 +36,14 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     // Initialize available memory allocation system
     struct mem_header *memory_map = init_memory_map(efi_memory_map);
 
-    allocate_pages(&console, memory_map, 0x3FF00);
+    // Test page allocation and deallocation
+    void *ptr_1 = allocate_pages(&memory_map, 0x2);
+    void *ptr_2 = allocate_pages(&memory_map, 0x3);
+    free_pages(&memory_map, ptr_1);
+    free_pages(&memory_map, ptr_2);
+    ptr_1 = NULL;
+    ptr_2 = NULL;
+
     display_mem(&console, memory_map);
     
     // Catches execution and ensures no undefined code is executed
