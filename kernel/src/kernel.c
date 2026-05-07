@@ -36,26 +36,10 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     // Initialize available memory allocation system
     struct mem_header *memory_map = init_memory_map(efi_memory_map);
 
-    // Allocates space for a page table and tests it
-    uint64_t *page_table = (uint64_t*)allocate_pages(&memory_map, 1) - 2;
-    uint64_t *page_dir = (uint64_t*)allocate_pages(&memory_map, 1) - 2;
-    uint64_t *pdpt = (uint64_t*)allocate_pages(&memory_map, 1) - 2;
-    uint64_t *pml4 = (uint64_t*)allocate_pages(&memory_map, 1) - 2;
+    struct segment_descriptor *gdt = (struct segment_descriptor*)allocate_pages(&memory_map, 1);
+    init_gdt(memory_map, gdt);
 
-    // Initialize the page system
-    init_page_table(page_table, 0x000000000000, PRESENT | READ_WRITE);
-    init_page_directory(page_dir, (uint64_t)page_table, READ_WRITE);
-    init_page_directory(pdpt, (uint64_t)page_dir, READ_WRITE);
-    init_page_directory(pml4, (uint64_t)pdpt, READ_WRITE);
-
-    *(pml4 + 384) = ((uint64_t)pdpt & 0xFFFFFFFFF000) | PRESENT | READ_WRITE;
-    *pdpt = ((uint64_t)page_dir & 0xFFFFFFFFF000) | PRESENT | READ_WRITE;
-    *page_dir = ((uint64_t)page_table & 0xFFFFFFFFF000) | PRESENT | READ_WRITE;
-
-    for(int i=0; i<512; i++){
-        printn(&console, *(pdpt + i));
-        printc(&console, ' ');
-    }
+    prints(&console, "GDT successfully loaded somehow??\n\r");
     
     // Catches execution and ensures no undefined code is executed
     for(;;){
@@ -83,9 +67,16 @@ uint64_t *init_page_directory(uint64_t *table_ptr, uint64_t target_addr, PAGE_SE
 
 uint64_t *init_pdpt(uint64_t *table_ptr, uint64_t target_addr, PAGE_SETTINGS flags) {
 
+    uint64_t page_size = 0x1000;
+
+    // Change the size of the page depending on the PS flag
+    if(flags & PAGE_SIZE) {
+        page_size = 0x1000000000;
+    }
+
     // Fills a page directory pointer table
     for(int i=0; i<512; i++){
-        *(table_ptr + i) = ((target_addr + 0x1000 * i) & 0xFFFFFFFFF000) | flags;
+        *(table_ptr + i) = ((target_addr + page_size * i) & 0xFFFFFFFFF000) | flags;
     }
     return table_ptr;
 }
@@ -101,40 +92,36 @@ uint64_t *init_pml4(uint64_t *table_ptr, uint64_t target_addr, PAGE_SETTINGS fla
 
 uint64_t *init_paging(struct mem_header **memory_map) {
     
-    uint64_t *pml4 = (uint64_t*)allocate_pages(memory_map, 1);
-    uint64_t *pdpt = (uint64_t*)allocate_pages(memory_map, 1);
-    uint64_t *pdir = (uint64_t*)allocate_pages(memory_map, 1);
-    uint64_t *ptab = (uint64_t*)allocate_pages(memory_map, 1);
+    return 0;
+}
 
-    // Fill the pml4 with non present pages
-    for(int i=0; i<512; i++){
-        *(pml4 + i) = READ_WRITE;
-    }
+void init_gdt(struct mem_header *memory_map, struct segment_descriptor *addr) {
 
-    // Set the 384th entry of the pml4, corresponds to 0xC0...
-    // Chunk granted R/W, present, and supervisor permissions.
-    *(pml4 + 384) = ((uint64_t)pdpt & 0x0000FFFFFFFFF000) | PRESENT | READ_WRITE;
+    uint64_t cs_flags = DESCRIPTOR_ACCESSED | DESCRIPTOR_READ_WRITE | DESCRIPTOR_EXECUTABLE | DESCRIPTOR_TYPE | 
+        DESCRIPTOR_K_PRIVILEGE | DESCRIPTOR_PRESENT | DESCRIPTOR_GRANULARITY;
+    
+    uint64_t ds_flags = DESCRIPTOR_ACCESSED | DESCRIPTOR_READ_WRITE | DESCRIPTOR_TYPE | DESCRIPTOR_K_PRIVILEGE | 
+        DESCRIPTOR_PRESENT | DESCRIPTOR_GRANULARITY | DESCRIPTOR_LONG_MODE;
 
-    // Fill the pdpt with non present pages
-    for(int i=0; i<512; i++){
-        *(pdpt + i) = READ_WRITE;
-    }
+    addr->descriptor_l = 0x0000000000000000; // Void entry
+    addr->descriptor_h = 0x0000000000000000;
 
-    // Set the 0th entry of the page directory pointer table
-    *pdpt = ((uint64_t)pdir & 0x0000FFFFFFFFF000) | PRESENT | READ_WRITE;
+    // Code segment
+    (addr+1)->descriptor_l = 0x0000000000000000 | cs_flags;
+    (addr+1)->descriptor_h = 0x0000000000000000;
 
-    // Fill the page directory with non present pages
-    for(int i=0; i<512; i++){
-        *(pdir + i) = READ_WRITE;
-    }
+    // Data segment
+    (addr+2)->descriptor_l = 0x0000000000000000 | ds_flags;
+    (addr+2)->descriptor_h = 0x0000000000000000;
 
-    // Set the 0th entry of the page directory
-    *pdir = ((uint64_t)ptab & 0x0000FFFFFFFFF000) | PRESENT | READ_WRITE;
+    struct gdt_descriptor *gdt_ptr = (struct gdt_descriptor*)allocate_pages(&memory_map, 1);
+    
+    gdt_ptr->size = 47;
+    gdt_ptr->offset = (uint64_t)addr;
 
-    // Fill the page table with the first 512 pages
-    for(int i=0; i<512; i++){
-        *(ptab + i) = (0x1000 * i) | PRESENT | READ_WRITE;
-    }
-
-    return pml4;
+    asm(
+        "lgdt %0"
+        :
+        :"m"(*gdt_ptr)
+    );
 }

@@ -8,7 +8,7 @@
     #define LIST 1
 #endif
 
-extern const int DESCRIPTOR_SIZE;
+extern const int MAP_SIZE;
 
 // Types of memory that are available
 typedef enum {
@@ -43,3 +43,6 @@ void *allocate_pages(struct mem_header **memory_map, int pages);
 
 // Frees previously allocated pages
 void free_pages(struct mem_header **memory_map, void *ptr);
+
+// Initializes the gdt
+void init_gdt(struct mem_header *memory_map, struct segment_descriptor *addr);

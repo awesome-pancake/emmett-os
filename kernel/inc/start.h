@@ -29,15 +29,42 @@ typedef enum {
 } EFI_MEMORY_TYPE;
 
 typedef enum {
-    PRESENT = 0x1,
-    READ_WRITE = 0x2,
-    USER = 0x4,
-    PWT = 0x8,
-    PCD = 0x10,
-    ACCESSED = 0x20,
+    PAGE_PRESENT = 0x1,
+    PAGE_READ_WRITE = 0x2,
+    PAGE_USER = 0x4,
+    PAGE_PWT = 0x8,
+    PAGE_PCD = 0x10,
+    PAGE_ACCESSED = 0x20,
     PAGE_SIZE = 0x80,
-    EXECUTE_DISABLE = 0x8000000000000000
+    PAGE_EXECUTE_DISABLE = 0x8000000000000000
 } PAGE_SETTINGS;
+
+typedef enum {
+    DESCRIPTOR_PRESENT = 0x800000000000,
+    DESCRIPTOR_K_PRIVILEGE = 0x000000000000,
+    DESCRIPTOR_U_PRIVELEGE = 0x600000000000,
+    DESCRIPTOR_TYPE = 0x100000000000,
+    DESCRIPTOR_EXECUTABLE = 0x80000000000,
+    DESCRIPTOR_DIRECTION = 0x40000000000,
+    DESCRIPTOR_READ_WRITE = 0x20000000000,
+    DESCRIPTOR_ACCESSED = 0x10000000000
+} GDT_ACCESS;
+
+typedef enum {
+    DESCRIPTOR_GRANULARITY = 0x80000000000000,
+    DESCRIPTOR_SIZE = 0x40000000000000,
+    DESCRIPTOR_LONG_MODE = 0x20000000000000
+} GDT_FLAGS;
+
+struct segment_descriptor {
+    uint64_t descriptor_l;
+    uint64_t descriptor_h;
+};
+
+struct gdt_descriptor {
+    uint16_t size;
+    uint64_t offset;
+};
 
 // EFI memory descriptor
 struct efi_memory_descriptor{
