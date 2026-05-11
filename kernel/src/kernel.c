@@ -34,11 +34,19 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     prints(&console, "Kernel successfully loaded.\n\r");
     
     // Initialize available memory allocation system
-    struct mem_header *memory_map = init_memory_map(efi_memory_map);
+    // struct mem_header *memory_map = init_memory_map(&console, efi_memory_map);
+    // prints(&console, "Memory allocation initialized.\n\r");
+    struct mem_header *memory_map = NULL;
 
-    struct segment_descriptor *gdt = (struct segment_descriptor*)allocate_pages(&memory_map, 1);
-    init_gdt(memory_map, gdt);
+    // Allocate space for GDT
+    // struct segment_descriptor *gdt = (struct segment_descriptor*)allocate_pages(&memory_map, 1);
+    struct segment_descriptor *gdt = (struct segment_descriptor*)0;
+    prints(&console, "Space for GDT allocated: ");
+    printn(&console, (uint64_t)gdt);
+    prints(&console, "\n\r");
 
+    // Initialize GDT
+    init_gdt(&console, memory_map, gdt);
     prints(&console, "GDT successfully loaded somehow??\n\r");
     
     // Catches execution and ensures no undefined code is executed
@@ -95,7 +103,7 @@ uint64_t *init_paging(struct mem_header **memory_map) {
     return 0;
 }
 
-void init_gdt(struct mem_header *memory_map, struct segment_descriptor *addr) {
+void init_gdt(struct console_state *console, struct mem_header *memory_map, struct segment_descriptor *addr) {
 
     uint64_t cs_flags = DESCRIPTOR_ACCESSED | DESCRIPTOR_READ_WRITE | DESCRIPTOR_EXECUTABLE | DESCRIPTOR_TYPE | 
         DESCRIPTOR_K_PRIVILEGE | DESCRIPTOR_PRESENT | DESCRIPTOR_GRANULARITY;
@@ -114,7 +122,10 @@ void init_gdt(struct mem_header *memory_map, struct segment_descriptor *addr) {
     (addr+2)->descriptor_l = 0x0000000000000000 | ds_flags;
     (addr+2)->descriptor_h = 0x0000000000000000;
 
-    struct gdt_descriptor *gdt_ptr = (struct gdt_descriptor*)allocate_pages(&memory_map, 1);
+    // struct gdt_descriptor *gdt_ptr = (struct gdt_descriptor*)allocate_pages(&memory_map, 1);
+    struct gdt_descriptor *gdt_ptr = (struct gdt_descriptor*)0x1000;
+
+    printn(console, (uint64_t)gdt_ptr);
     
     gdt_ptr->size = 47;
     gdt_ptr->offset = (uint64_t)addr;

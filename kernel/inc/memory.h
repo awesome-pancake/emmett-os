@@ -36,7 +36,7 @@ int display_efi_mem(struct console_state *console, struct efi_memory_map *memory
 int display_mem(struct console_state *console, struct mem_header *memory_map);
 
 // Initializes available memory
-struct mem_header *init_memory_map(struct efi_memory_map *memory_map);
+struct mem_header *init_memory_map(struct console_state *console, struct efi_memory_map *memory_map);
 
 // Allocates a certain number of free pages
 void *allocate_pages(struct mem_header **memory_map, int pages);
@@ -45,4 +45,4 @@ void *allocate_pages(struct mem_header **memory_map, int pages);
 void free_pages(struct mem_header **memory_map, void *ptr);
 
 // Initializes the gdt
-void init_gdt(struct mem_header *memory_map, struct segment_descriptor *addr);
+void init_gdt(struct console_state *console, struct mem_header *memory_map, struct segment_descriptor *addr);

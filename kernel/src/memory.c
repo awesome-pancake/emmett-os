@@ -1,6 +1,9 @@
 #include <memory.h>
 #include <console.h>
 
+// Different definition of a null pointer since the address 0 may be used.
+#define K_NULL ((void*)0xFFFFFFFFFFFFFFFF);
+
 const int MAP_SIZE = sizeof(struct efi_memory_descriptor);
 
 int display_efi_mem(struct console_state *console, struct efi_memory_map *memory_map) {
@@ -46,7 +49,9 @@ int display_mem(struct console_state *console, struct mem_header *memory_map) {
     return 0;
 }
 
-struct mem_header *init_memory_map(struct efi_memory_map *memory_map) {
+struct mem_header *init_memory_map(struct console_state *console, struct efi_memory_map *memory_map) {
+
+    prints(console, "Initializing memory allocation...\n\r");
 
     uint32_t current_type = 0;
     int page_id = -1;
@@ -91,7 +96,7 @@ struct mem_header *init_memory_map(struct efi_memory_map *memory_map) {
 
 void *allocate_pages(struct mem_header **memory_map, int pages) {
 
-    void *output_ptr = NULL;
+    void *output_ptr = K_NULL;
     struct mem_header *curr_node = *memory_map;
 
     // Find available chunks of adequate size
