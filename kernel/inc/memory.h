@@ -45,4 +45,4 @@ void *allocate_pages(struct mem_header **memory_map, int pages);
 void free_pages(struct mem_header **memory_map, void *ptr);
 
 // Initializes the gdt
-void init_gdt(struct console_state *console, struct mem_header *memory_map, struct segment_descriptor *addr);
+struct gdt_descriptor *init_gdt(struct segment_descriptor *addr);

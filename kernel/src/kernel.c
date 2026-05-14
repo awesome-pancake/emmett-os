@@ -1,6 +1,7 @@
 #include <start.h>
 #include <console.h>
 #include <memory.h>
+#include <interrupt.h>
 
 #ifndef LIST
     #include <list.h>
@@ -46,8 +47,10 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     prints(&console, "\n\r");
 
     // Initialize GDT
-    init_gdt(&console, memory_map, gdt);
-    prints(&console, "GDT successfully loaded somehow??\n\r");
+    struct gdt_descriptor *gdtr = init_gdt(gdt);
+    prints(&console, "GDT successfully loaded. GDTR: ");
+    printn(&console, (uint64_t)gdtr);
+    prints(&console, "\n\r");
     
     // Catches execution and ensures no undefined code is executed
     for(;;){
@@ -103,7 +106,7 @@ uint64_t *init_paging(struct mem_header **memory_map) {
     return 0;
 }
 
-void init_gdt(struct console_state *console, struct mem_header *memory_map, struct segment_descriptor *addr) {
+struct gdt_descriptor *init_gdt(struct segment_descriptor *addr) {
 
     uint64_t cs_flags = DESCRIPTOR_ACCESSED | DESCRIPTOR_READ_WRITE | DESCRIPTOR_EXECUTABLE | DESCRIPTOR_TYPE | 
         DESCRIPTOR_K_PRIVILEGE | DESCRIPTOR_PRESENT | DESCRIPTOR_GRANULARITY;
@@ -111,7 +114,8 @@ void init_gdt(struct console_state *console, struct mem_header *memory_map, stru
     uint64_t ds_flags = DESCRIPTOR_ACCESSED | DESCRIPTOR_READ_WRITE | DESCRIPTOR_TYPE | DESCRIPTOR_K_PRIVILEGE | 
         DESCRIPTOR_PRESENT | DESCRIPTOR_GRANULARITY | DESCRIPTOR_LONG_MODE;
 
-    addr->descriptor_l = 0x0000000000000000; // Void entry
+    // Required void entry
+    addr->descriptor_l = 0x0000000000000000;
     addr->descriptor_h = 0x0000000000000000;
 
     // Code segment
@@ -122,17 +126,35 @@ void init_gdt(struct console_state *console, struct mem_header *memory_map, stru
     (addr+2)->descriptor_l = 0x0000000000000000 | ds_flags;
     (addr+2)->descriptor_h = 0x0000000000000000;
 
-    // struct gdt_descriptor *gdt_ptr = (struct gdt_descriptor*)allocate_pages(&memory_map, 1);
-    struct gdt_descriptor *gdt_ptr = (struct gdt_descriptor*)0x1000;
-
-    printn(console, (uint64_t)gdt_ptr);
+    // Points to the gdtr structure
+    struct gdt_descriptor *gdt_ptr = (struct gdt_descriptor*)0xFE0;
     
     gdt_ptr->size = 47;
     gdt_ptr->offset = (uint64_t)addr;
 
+    // Loads the location of the global descriptor table
     asm(
         "lgdt %0"
         :
         :"m"(*gdt_ptr)
     );
+
+    return gdt_ptr;
+}
+
+struct idt_descriptor *init_idt(struct gate_descriptor *addr) {
+
+    struct idt_descriptor *idt_ptr = (struct idt_descriptor*)0x2000;
+    
+    idt_ptr->size = 0;
+    idt_ptr->offset = (uint64_t)addr;
+
+    // Loads the location of the interrupt descriptor table
+    asm(
+        "lidt %0"
+        :
+        :"m"(*idt_ptr)
+    );
+
+    return idt_ptr;
 }

@@ -56,11 +56,13 @@ typedef enum {
     DESCRIPTOR_LONG_MODE = 0x20000000000000
 } GDT_FLAGS;
 
+// Entry in the global descriptor table
 struct segment_descriptor {
     uint64_t descriptor_l;
     uint64_t descriptor_h;
 };
 
+// Structure that points to the global descriptor table
 struct gdt_descriptor {
     uint16_t size;
     uint64_t offset;
@@ -69,12 +71,12 @@ struct gdt_descriptor {
 // EFI memory descriptor
 struct efi_memory_descriptor{
     uint32_t    type;
-    uint32_t    paddingl;
+    uint32_t    padding_l;
     uint64_t    physical_start;
     uint64_t    virtual_start;
     uint64_t    pages;
     uint64_t    attribute;
-    uint64_t    paddingh;
+    uint64_t    padding_h;
 };
 
 struct efi_memory_map{
