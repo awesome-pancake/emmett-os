@@ -58,8 +58,7 @@ typedef enum {
 
 // Entry in the global descriptor table
 struct segment_descriptor {
-    uint64_t descriptor_l;
-    uint64_t descriptor_h;
+    uint64_t descriptor;
 };
 
 // Structure that points to the global descriptor table

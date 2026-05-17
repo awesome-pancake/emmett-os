@@ -19,3 +19,8 @@ struct idt_descriptor {
     uint16_t    size;
     uint64_t    offset;
 };
+
+// Initializes the interrupt descriptor table
+struct idt_descriptor *init_idt(struct console_state *console, struct gate_descriptor *addr);
+
+extern void int_DE();       // Division by zero exception handler

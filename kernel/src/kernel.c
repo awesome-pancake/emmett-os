@@ -15,11 +15,11 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     struct console_state console = {
         .display = disp,
         .cursor_x = 0,
-        .cursor_y = 0,
+        .cursor_y = 4,
         .back_colour = {
-            .blue = 0x00,
-            .green = 0x00,
-            .red = 0x00,
+            .blue = 0x0E,
+            .green = 0x0A,
+            .red = 0x1A,
             .reserved = 0x00
         },
         .text_colour = {
@@ -30,14 +30,33 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
         }
     };
 
+    struct console_state console_red = {
+        .display = disp,
+        .cursor_x = 0,
+        .cursor_y = 0,
+        .back_colour = {
+            .blue = 0x15,
+            .green = 0x15,
+            .red = 0xD7,
+            .reserved = 0x00
+        },
+        .text_colour = {
+            .blue = 0x0E,
+            .green = 0x0A,
+            .red = 0x1A,
+            .reserved = 0x00
+        }
+    };
+
     // Clear the console
     cls(&console);
+    prints(&console_red, "                                                                        \n\r Emmett OS                                                              \n\r                                                                        \n");
     prints(&console, "Kernel successfully loaded.\n\r");
     
     // Initialize available memory allocation system
     // struct mem_header *memory_map = init_memory_map(&console, efi_memory_map);
     // prints(&console, "Memory allocation initialized.\n\r");
-    struct mem_header *memory_map = NULL;
+    // struct mem_header *memory_map = NULL;
 
     // Allocate space for GDT
     // struct segment_descriptor *gdt = (struct segment_descriptor*)allocate_pages(&memory_map, 1);
@@ -47,9 +66,21 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     prints(&console, "\n\r");
 
     // Initialize GDT
-    struct gdt_descriptor *gdtr = init_gdt(gdt);
+    struct gdt_descriptor *gdtr = init_gdt(&console, gdt);
     prints(&console, "GDT successfully loaded. GDTR: ");
     printn(&console, (uint64_t)gdtr);
+    prints(&console, "\n\r");
+
+    // Allocate space for IDT
+    struct gate_descriptor *idt = (struct gate_descriptor*)0x1000;
+    prints(&console, "Space for IDT allocated: ");
+    printn(&console, (uint64_t)idt);
+    prints(&console, "\n\r");
+
+    // // Initialize interrupts
+    struct idt_descriptor *idtr = init_idt(&console, idt);
+    prints(&console, "IDT successfully loaded. IDTR: ");
+    printn(&console, (uint64_t)idtr);
     prints(&console, "\n\r");
     
     // Catches execution and ensures no undefined code is executed
@@ -106,31 +137,34 @@ uint64_t *init_paging(struct mem_header **memory_map) {
     return 0;
 }
 
-struct gdt_descriptor *init_gdt(struct segment_descriptor *addr) {
+struct gdt_descriptor *init_gdt(struct console_state *console, struct segment_descriptor *addr) {
 
     uint64_t cs_flags = DESCRIPTOR_ACCESSED | DESCRIPTOR_READ_WRITE | DESCRIPTOR_EXECUTABLE | DESCRIPTOR_TYPE | 
-        DESCRIPTOR_K_PRIVILEGE | DESCRIPTOR_PRESENT | DESCRIPTOR_GRANULARITY;
+        DESCRIPTOR_K_PRIVILEGE | DESCRIPTOR_PRESENT | DESCRIPTOR_GRANULARITY | DESCRIPTOR_LONG_MODE;
     
     uint64_t ds_flags = DESCRIPTOR_ACCESSED | DESCRIPTOR_READ_WRITE | DESCRIPTOR_TYPE | DESCRIPTOR_K_PRIVILEGE | 
-        DESCRIPTOR_PRESENT | DESCRIPTOR_GRANULARITY | DESCRIPTOR_LONG_MODE;
+        DESCRIPTOR_PRESENT | DESCRIPTOR_GRANULARITY;
 
     // Required void entry
-    addr->descriptor_l = 0x0000000000000000;
-    addr->descriptor_h = 0x0000000000000000;
+    addr->descriptor = 0x0000000000000000;
 
     // Code segment
-    (addr+1)->descriptor_l = 0x0000000000000000 | cs_flags;
-    (addr+1)->descriptor_h = 0x0000000000000000;
+    (addr+1)->descriptor = 0xF00000000FFFF | cs_flags;
 
     // Data segment
-    (addr+2)->descriptor_l = 0x0000000000000000 | ds_flags;
-    (addr+2)->descriptor_h = 0x0000000000000000;
+    (addr+2)->descriptor = 0xF00000000FFFF | ds_flags;
+    
+    printn(console, (addr + 2)->descriptor);
+    prints(console, "\n\r");
 
     // Points to the gdtr structure
     struct gdt_descriptor *gdt_ptr = (struct gdt_descriptor*)0xFE0;
     
-    gdt_ptr->size = 47;
+    gdt_ptr->size = 0x17;
     gdt_ptr->offset = (uint64_t)addr;
+
+    printn(console, *(uint64_t*)0xDED6C020);
+    prints(console, "\n\r");
 
     // Loads the location of the global descriptor table
     asm(
@@ -139,22 +173,48 @@ struct gdt_descriptor *init_gdt(struct segment_descriptor *addr) {
         :"m"(*gdt_ptr)
     );
 
+    load_segments(0x0008, 0x0010);
+
     return gdt_ptr;
 }
 
-struct idt_descriptor *init_idt(struct gate_descriptor *addr) {
+struct idt_descriptor *init_idt(struct console_state *console, struct gate_descriptor *addr) {
+
+    // Points to the currently used interrupt.
+    void (*curr_interrupt)() = &int_DE;
+
+    printn(console, (uint64_t)curr_interrupt);
+    prints(console, "\n\r");
+
+    for(int i=0; i<256; i++){
+        (addr + i)->offset_l = (uint16_t)(0xFFFF & (uint64_t)curr_interrupt);
+        (addr + i)->selector = 0x000C; // Points to code segment
+        (addr + i)->stack_table = 0;
+        (addr + i)->attributes = 0x8F; // Trap gate
+        (addr + i)->offset_m = (uint16_t)((0xFFFF0000 & (uint64_t)curr_interrupt) >> 16);
+        (addr + i)->offset_h = (uint32_t)((0xFFFFFFFF00000000 & (uint64_t)curr_interrupt) >> 32);
+        (addr + i)->reserved = 0;
+    }
+
+    printn(console, *(uint64_t*)addr);
+    prints(console, "\n\r");
+    printn(console, *((uint64_t*)addr+1));
+    prints(console, "\n\r");
 
     struct idt_descriptor *idt_ptr = (struct idt_descriptor*)0x2000;
     
-    idt_ptr->size = 0;
+    idt_ptr->size = 4095;
     idt_ptr->offset = (uint64_t)addr;
 
+    printn(console, *(uint64_t*)0xDE564018);
+    prints(console, "\n\r");
+
     // Loads the location of the interrupt descriptor table
-    asm(
-        "lidt %0"
-        :
-        :"m"(*idt_ptr)
-    );
+    // asm(
+    //     "lidt %0"
+    //     :
+    //     :"m"(*idt_ptr)
+    // );
 
     return idt_ptr;
 }
