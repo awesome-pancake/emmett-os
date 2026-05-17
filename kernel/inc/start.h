@@ -65,7 +65,7 @@ struct segment_descriptor {
 struct gdt_descriptor {
     uint16_t size;
     uint64_t offset;
-};
+} __attribute__((packed));
 
 // EFI memory descriptor
 struct efi_memory_descriptor{

@@ -18,7 +18,7 @@ struct gate_descriptor {
 struct idt_descriptor {
     uint16_t    size;
     uint64_t    offset;
-};
+} __attribute__((packed));
 
 // Initializes the interrupt descriptor table
 struct idt_descriptor *init_idt(struct console_state *console, struct gate_descriptor *addr);

@@ -153,9 +153,6 @@ struct gdt_descriptor *init_gdt(struct console_state *console, struct segment_de
 
     // Data segment
     (addr+2)->descriptor = 0xF00000000FFFF | ds_flags;
-    
-    printn(console, (addr + 2)->descriptor);
-    prints(console, "\n\r");
 
     // Points to the gdtr structure
     struct gdt_descriptor *gdt_ptr = (struct gdt_descriptor*)0xFE0;
@@ -163,7 +160,7 @@ struct gdt_descriptor *init_gdt(struct console_state *console, struct segment_de
     gdt_ptr->size = 0x17;
     gdt_ptr->offset = (uint64_t)addr;
 
-    printn(console, *(uint64_t*)0xDED6C020);
+    printn(console, *(uint64_t*)0xFE2);
     prints(console, "\n\r");
 
     // Loads the location of the global descriptor table
@@ -188,9 +185,9 @@ struct idt_descriptor *init_idt(struct console_state *console, struct gate_descr
 
     for(int i=0; i<256; i++){
         (addr + i)->offset_l = (uint16_t)(0xFFFF & (uint64_t)curr_interrupt);
-        (addr + i)->selector = 0x000C; // Points to code segment
+        (addr + i)->selector = 0x0008; // Points to code segment
         (addr + i)->stack_table = 0;
-        (addr + i)->attributes = 0x8F; // Trap gate
+        (addr + i)->attributes = 0x8E; // Interrupt gate
         (addr + i)->offset_m = (uint16_t)((0xFFFF0000 & (uint64_t)curr_interrupt) >> 16);
         (addr + i)->offset_h = (uint32_t)((0xFFFFFFFF00000000 & (uint64_t)curr_interrupt) >> 32);
         (addr + i)->reserved = 0;
@@ -203,18 +200,20 @@ struct idt_descriptor *init_idt(struct console_state *console, struct gate_descr
 
     struct idt_descriptor *idt_ptr = (struct idt_descriptor*)0x2000;
     
-    idt_ptr->size = 4095;
+    idt_ptr->size = 0xFFF;
     idt_ptr->offset = (uint64_t)addr;
 
-    printn(console, *(uint64_t*)0xDE564018);
+    printn(console, *(uint64_t*)0x2002);
     prints(console, "\n\r");
 
     // Loads the location of the interrupt descriptor table
-    // asm(
-    //     "lidt %0"
-    //     :
-    //     :"m"(*idt_ptr)
-    // );
+    asm(
+        "lidt %0;"
+        :
+        :"m"(*idt_ptr)
+    );
+
+    int x = 1/0;
 
     return idt_ptr;
 }

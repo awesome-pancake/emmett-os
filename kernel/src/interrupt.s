@@ -5,5 +5,5 @@ section .text
 
 int_DE:
     endbr64
-    mov rax, 1
+    mov rcx, 1
     iretq
