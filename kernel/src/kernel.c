@@ -62,14 +62,20 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     printn((uint64_t)idtr);
     prints("\n\r");
 
-    printn((uint64_t)get_lapic(0x30));
-    prints("\n\r");
-
-    set_port(0x64, 0xAA);
-
+    // Basic proof of concept keyboard polling system
+    uint8_t prev_code = 0;
     for(;;){
-        uint8_t keycode = get_port(0x60);
-        printn((uint64_t)keycode);
+        uint8_t key_code = get_port(0x60);
+        if(prev_code != key_code){
+            printc(convert_code(key_code));
+            uint8_t temp_x = console.cursor_x;
+            uint8_t temp_y = console.cursor_y;
+            printc(7);
+            printc(' ');
+            console.cursor_x = temp_x;
+            console.cursor_y = temp_y;
+            prev_code = key_code;
+        }
     }
 
     // Catches execution and ensures no undefined code is executed

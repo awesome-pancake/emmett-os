@@ -38,5 +38,11 @@ extern uint8_t get_port(uint8_t port);
 // Sets a command for a legacy port
 extern void set_port(uint8_t port, uint8_t value);
 
+// Wrapper for the CONVERT_CODE array
+char convert_code(uint8_t scan_code);
+
+// Converts a PS/2 scan code into an ASCII character
+extern const char CONVERT_CODE[256];
+
 extern void int_DE();           // Division by zero exception handler
 extern void int_key();          // Keyboard interrupt handler
