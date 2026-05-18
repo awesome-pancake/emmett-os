@@ -6,42 +6,42 @@
 
 const int MAP_SIZE = sizeof(struct efi_memory_descriptor);
 
-int display_efi_mem(struct console_state *console, struct efi_memory_map *memory_map) {
+int display_efi_mem(struct efi_memory_map *memory_map) {
     // Some title stuff
-    prints(console, "Type:              ");
-    prints(console, "Physical Start:    ");
-    prints(console, "Virtual Start:     ");
-    prints(console, "Pages:             ");
-    prints(console, "Attribute:         \n\r");
+    prints("Type:              ");
+    prints("Physical Start:    ");
+    prints("Virtual Start:     ");
+    prints("Pages:             ");
+    prints("Attribute:         \n\r");
 
     // Display every memory descriptor
     for(int i=0; i<memory_map->map_size/DESCRIPTOR_SIZE; i++){
-        printn(console, memory_map->descriptor_table[i].type);
-        printc(console, ' ');
-        printn(console, memory_map->descriptor_table[i].physical_start);
-        printc(console, ' ');
-        printn(console, memory_map->descriptor_table[i].virtual_start);
-        printc(console, ' ');
-        printn(console, memory_map->descriptor_table[i].pages);
-        printc(console, ' ');
-        printn(console, memory_map->descriptor_table[i].attribute);
-        prints(console, "\n\r");
+        printn(memory_map->descriptor_table[i].type);
+        printc(' ');
+        printn(memory_map->descriptor_table[i].physical_start);
+        printc(' ');
+        printn(memory_map->descriptor_table[i].virtual_start);
+        printc(' ');
+        printn(memory_map->descriptor_table[i].pages);
+        printc(' ');
+        printn(memory_map->descriptor_table[i].attribute);
+        prints("\n\r");
     }
 
     return 0;
 }
 
-int display_mem(struct console_state *console, struct mem_header *memory_map) {
+int display_mem(struct mem_header *memory_map) {
 
     struct mem_header *curr_node = memory_map;
 
-    prints(console, "Start:             Size:             \n\r");
+    prints("Start:             Size:             \n\r");
     do {
         // Iterates through the memory map, displaying every entry
-        printn(console, (uint64_t)curr_node);
-        printc(console, ' ');
-        printn(console, curr_node->size);
-        prints(console, "\n\r");
+        printn((uint64_t)curr_node);
+        printc(' ');
+        printn(curr_node->size);
+        prints("\n\r");
         curr_node = (struct mem_header*)curr_node->fd;
 
     } while (curr_node != memory_map);
@@ -49,9 +49,9 @@ int display_mem(struct console_state *console, struct mem_header *memory_map) {
     return 0;
 }
 
-struct mem_header *init_memory_map(struct console_state *console, struct efi_memory_map *memory_map) {
+struct mem_header *init_memory_map(struct efi_memory_map *memory_map) {
 
-    prints(console, "Initializing memory allocation...\n\r");
+    prints("Initializing memory allocation...\n\r");
 
     uint32_t current_type = 0;
     int page_id = -1;
@@ -215,4 +215,39 @@ void free_pages(struct mem_header **memory_map, void *ptr) {
         curr_node = curr_node->fd;
 
     } while (curr_node != *memory_map);
+}
+
+struct gdt_descriptor *init_gdt(struct segment_descriptor *addr) {
+
+    uint64_t cs_flags = DESCRIPTOR_ACCESSED | DESCRIPTOR_READ_WRITE | DESCRIPTOR_EXECUTABLE | DESCRIPTOR_TYPE | 
+        DESCRIPTOR_K_PRIVILEGE | DESCRIPTOR_PRESENT | DESCRIPTOR_GRANULARITY | DESCRIPTOR_LONG_MODE;
+    
+    uint64_t ds_flags = DESCRIPTOR_ACCESSED | DESCRIPTOR_READ_WRITE | DESCRIPTOR_TYPE | DESCRIPTOR_K_PRIVILEGE | 
+        DESCRIPTOR_PRESENT | DESCRIPTOR_GRANULARITY;
+
+    // Required void entry
+    addr->descriptor = 0x0000000000000000;
+
+    // Code segment
+    (addr+1)->descriptor = 0xF00000000FFFF | cs_flags;
+
+    // Data segment
+    (addr+2)->descriptor = 0xF00000000FFFF | ds_flags;
+
+    // Points to the gdtr structure
+    struct gdt_descriptor *gdt_ptr = (struct gdt_descriptor*)0xFE0;
+    
+    gdt_ptr->size = 0x17;
+    gdt_ptr->offset = (uint64_t)addr;
+
+    // Loads the location of the global descriptor table
+    asm(
+        "lgdt %0"
+        :
+        :"m"(*gdt_ptr)
+    );
+
+    load_segments(0x0008, 0x0010);
+
+    return gdt_ptr;
 }

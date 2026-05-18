@@ -34,27 +34,27 @@ int fill_screen(struct display *disp, struct display_colour colour) {
     return 0;
 }
 
-int cls(struct console_state *console) {
-    return fill_screen(console->display, console->back_colour);
+int cls() {
+    return fill_screen(console.display, console.back_colour);
 }
 
-int printc(struct console_state *console, char c) {
+int printc(char c) {
     // Frame buffer and related helpful constants
-    uint8_t *bf = console->display->frame_buffer;
-    uint32_t width = console->display->horizontal_resolution;
-    uint32_t height = console->display->vertical_resolution;
+    uint8_t *bf = console.display->frame_buffer;
+    uint32_t width = console.display->horizontal_resolution;
+    uint32_t height = console.display->vertical_resolution;
 
     // Draw the character
     for(uint8_t y=0; y<16; y++){
         for(uint8_t x=0; x<8; x++){
             // Offset from start address of framebuffer
-            int offset = sizeof(struct display_colour)*(y*width + FONT_HEIGHT*console->cursor_y*width + x + FONT_WIDTH*console->cursor_x);
+            int offset = sizeof(struct display_colour)*(y*width + FONT_HEIGHT*console.cursor_y*width + x + FONT_WIDTH*console.cursor_x);
 
             // Pixel pointer
             struct display_colour *px = (struct display_colour*)(bf + offset);
 
             // Bitwise operations to determine if the current pixel is lit
-            struct display_colour px_colour = (FIXEDSYS.rows[(uint8_t)c][y] & (0x80 >> x)) != 0 ? console->text_colour : console->back_colour;
+            struct display_colour px_colour = (FIXEDSYS.rows[(uint8_t)c][y] & (0x80 >> x)) != 0 ? console.text_colour : console.back_colour;
 
             // Draw the pixel
             px->reserved = 0;
@@ -67,18 +67,18 @@ int printc(struct console_state *console, char c) {
     // Determine the new position of the cursor
     switch(c){
         case '\n':
-            console->cursor_y += (console->cursor_y + 1 == height/FONT_HEIGHT) ? 0 : 1;
+            console.cursor_y += (console.cursor_y + 1 == height/FONT_HEIGHT) ? 0 : 1;
             break;
         case '\r':
-            console->cursor_x = 0;
+            console.cursor_x = 0;
             break;
         default:
             // Move the cursor forward normally
-            if(console->cursor_x + 1 == width/FONT_WIDTH){
-                console->cursor_x = 0;
-                console->cursor_y += (console->cursor_y + 1 == height/FONT_HEIGHT) ? 0 : 1;
+            if(console.cursor_x + 1 == width/FONT_WIDTH){
+                console.cursor_x = 0;
+                console.cursor_y += (console.cursor_y + 1 == height/FONT_HEIGHT) ? 0 : 1;
             } else {
-                console->cursor_x++;
+                console.cursor_x++;
             }
             break;
     }
@@ -86,16 +86,16 @@ int printc(struct console_state *console, char c) {
     return 0;
 }
 
-int prints(struct console_state *console, char *str) {
+int prints(char *str) {
     int i = 0;
     while(str[i] != '\0'){
-        printc(console, str[i]);
+        printc(str[i]);
         i++;
     }
     return 0;
 }
 
-int printn(struct console_state *console, uint64_t num) {
+int printn(uint64_t num) {
     // Uses the accumulator pattern to convert a number into a hexadecimal string
     char nib_to_hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
     char hex_string[19] = {'0', 'x'};
@@ -106,7 +106,7 @@ int printn(struct console_state *console, uint64_t num) {
         hex_string[x+2] = nib_to_hex[nibble];
     }
 
-    return prints(console, hex_string);
+    return prints(hex_string);
 }
 
 const uint16_t FONT_HEIGHT = 16;

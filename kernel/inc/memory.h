@@ -3,11 +3,6 @@
     #define KERNEL_ENTRY 1
 #endif
 
-#ifndef LIST
-    #include <list.h>
-    #define LIST 1
-#endif
-
 extern const int MAP_SIZE;
 
 // Types of memory that are available
@@ -30,13 +25,13 @@ struct mem_header {
 };
 
 // Displays the efi memmap
-int display_efi_mem(struct console_state *console, struct efi_memory_map *memory_map);
+int display_efi_mem(struct efi_memory_map *memory_map);
 
 // Displays the currently available memory
-int display_mem(struct console_state *console, struct mem_header *memory_map);
+int display_mem(struct mem_header *memory_map);
 
 // Initializes available memory
-struct mem_header *init_memory_map(struct console_state *console, struct efi_memory_map *memory_map);
+struct mem_header *init_memory_map(struct efi_memory_map *memory_map);
 
 // Allocates a certain number of free pages
 void *allocate_pages(struct mem_header **memory_map, int pages);
@@ -45,7 +40,7 @@ void *allocate_pages(struct mem_header **memory_map, int pages);
 void free_pages(struct mem_header **memory_map, void *ptr);
 
 // Initializes the gdt
-struct gdt_descriptor *init_gdt(struct console_state *console, struct segment_descriptor *addr);
+struct gdt_descriptor *init_gdt(struct segment_descriptor *addr);
 
 // Reloads segments
 extern void load_segments(uint16_t cs_selector, uint16_t ds_selector);

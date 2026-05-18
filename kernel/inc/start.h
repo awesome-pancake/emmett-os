@@ -117,16 +117,5 @@ struct console_state {
 // Main kernel function
 int kernel_main(struct display *disp, struct efi_memory_map *memory_map);
 
-/* Paging and virtual memory hierarchy, starting from the bottom: */
-
-// Initializes a page table
-uint64_t *init_page_table(uint64_t *table_ptr, uint64_t target_addr, PAGE_SETTINGS flags);
-
-// Initializes a page directory
-uint64_t *init_page_directory(uint64_t *table_ptr, uint64_t target_addr, PAGE_SETTINGS flags);
-
-// Initializes a page directory pointer table
-uint64_t *init_pdpt(uint64_t *table_ptr, uint64_t target_addr, PAGE_SETTINGS flags);
-
-// Initializes a page map level 4
-uint64_t *init_pml4(uint64_t *table_ptr, uint64_t target_addr, PAGE_SETTINGS flags);
+// Holds the current state of the console.
+extern struct console_state console;
