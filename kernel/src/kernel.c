@@ -29,8 +29,8 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
 
     // Clear the console
     cls();
-    prints("\n\rEmmett OS\n\n\r");
-    prints("Kernel successfully loaded.\n\r");
+    prints("\x0E\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x0F\n\x12      Emmett OS      \x12\n\x10\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x11\n");
+    prints("Kernel successfully loaded.\n");
     
     // Initialize available memory allocation system
     // struct mem_header *memory_map = init_memory_map(&console, efi_memory_map);
@@ -42,38 +42,37 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     struct segment_descriptor *gdt = (struct segment_descriptor*)0;
     prints("Space for GDT allocated: ");
     printn((uint64_t)gdt);
-    prints("\n\r");
+    prints("\n");
 
     // Initialize GDT
     struct gdt_descriptor *gdtr = init_gdt(gdt);
     prints("GDT successfully loaded. GDTR: ");
     printn((uint64_t)gdtr);
-    prints("\n\r");
+    prints("\n");
 
     // Allocate space for IDT
     struct gate_descriptor *idt = (struct gate_descriptor*)0x1000;
     prints("Space for IDT allocated: ");
     printn((uint64_t)idt);
-    prints("\n\r");
+    prints("\n");
 
     // // Initialize interrupts
     struct idt_descriptor *idtr = init_idt(idt);
     prints("IDT successfully loaded. IDTR: ");
     printn((uint64_t)idtr);
-    prints("\n\r");
+    prints("\n");
+
+    rainbow();
 
     // Basic proof of concept keyboard polling system
+    set_port(PS2COMMAND, 0xF4);
     uint8_t prev_code = 0;
     for(;;){
-        uint8_t key_code = get_port(0x60);
+        uint8_t key_code = get_port(PS2DATA);
         if(prev_code != key_code){
-            printc(convert_code(key_code));
-            uint8_t temp_x = console.cursor_x;
-            uint8_t temp_y = console.cursor_y;
-            printc(7);
-            printc(' ');
-            console.cursor_x = temp_x;
-            console.cursor_y = temp_y;
+            char character = convert_code(key_code);
+            printc(character);
+            update_cursor(character);
             prev_code = key_code;
         }
     }

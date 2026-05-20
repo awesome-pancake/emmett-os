@@ -41,8 +41,12 @@ extern void set_port(uint8_t port, uint8_t value);
 // Wrapper for the CONVERT_CODE array
 char convert_code(uint8_t scan_code);
 
-// Converts a PS/2 scan code into an ASCII character
+// Initializes the PS/2 controller
+void init_ps2();
+
 extern const char CONVERT_CODE[256];
+extern const uint8_t PS2COMMAND;
+extern const uint8_t PS2DATA;
 
 extern void int_DE();           // Division by zero exception handler
 extern void int_key();          // Keyboard interrupt handler

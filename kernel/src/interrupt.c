@@ -70,6 +70,19 @@ char convert_code(uint8_t scan_code) {
     return CONVERT_CODE[scan_code];
 }
 
+void init_ps2() {
+    // TODO:
+    // Disable both ports
+    // Do some stuff
+    // Enable devices
+    // Success
+}
+
+// PS/2 command and data ports
+const uint8_t PS2COMMAND = 0x64;
+const uint8_t PS2DATA = 0x60;
+
+// Converts a PS/2 scancode into a character
 const char CONVERT_CODE[256] = {
     '\0', '\0', '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',  '0',  '-',  '=',  '\b', '\0',
     'q',  'w',  'e',  'r',  't',  'y',  'u',  'i',  'o',  'p',  '[',  ']',  '\n', '\0', 'a',  's',
