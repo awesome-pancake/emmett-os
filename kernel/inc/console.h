@@ -32,6 +32,9 @@ int fill_colour(struct display_colour colour);
 // Resets the colour to the console defaults
 void reset_colour();
 
+// Shifts the entire console one cursor position upward
+void move_console();
+
 extern const uint16_t FONT_WIDTH;
 extern const uint16_t FONT_HEIGHT;
 extern const struct font FIXEDSYS;

@@ -44,6 +44,11 @@ int printc(char c) {
     uint8_t *bf = console.display->frame_buffer;
     uint32_t width = console.display->horizontal_resolution;
 
+    // Null characters aren't drawn
+    if(c == '\0'){
+        return 0;
+    }
+
     // Draw the character
     for(uint8_t y=0; y<16; y++){
         for(uint8_t x=0; x<8; x++){
@@ -94,18 +99,19 @@ int printn(uint64_t num) {
 
 void update_cursor(char character) {
 
-    // Determine the new position of the cursor
+    // Some important variables
     uint32_t width = console.display->horizontal_resolution;
     uint32_t height = console.display->vertical_resolution;
 
     // Handle certain special console characters
     if(character == '\b') {         // Backspace
         if(console.cursor_x == 0){
-            console.cursor_x = width/FONT_WIDTH;
+            console.cursor_x = width/FONT_WIDTH - 1;
             console.cursor_y -= (console.cursor_y == 0) ? 0 : 1;
         } else {
             console.cursor_x--;
         }
+        printc('\7');
         return;
     } else if (character == '\0') { // Null
         return;
@@ -114,7 +120,12 @@ void update_cursor(char character) {
     // Move other characters forward normally TODO: make this consistent
     switch(character){
         case '\n':
-        console.cursor_y += (console.cursor_y + 1 == height/FONT_HEIGHT) ? 0 : 1;
+        if(console.cursor_y + 1 == height/FONT_HEIGHT){
+            move_console();
+        } else {
+            console.cursor_y += 1;
+        }
+        // console.cursor_y += (console.cursor_y + 1 == height/FONT_HEIGHT) ? 0 : 1;
         console.cursor_x = 0;
         break;
         case '\r':
@@ -130,6 +141,35 @@ void update_cursor(char character) {
         }
         break;
     }
+
+    // Print the cursor indicator character
+    printc('\7');
+}
+
+void move_console() {
+
+    // TODO: make sure stuff on the bottom row is also moved upwards
+
+    // Some helpful constants
+    uint8_t *bf = console.display->frame_buffer;
+    uint32_t width = console.display->horizontal_resolution;
+    uint32_t height = console.display->vertical_resolution;
+
+    // Define the start location and number of bytes to copy
+    uint8_t *start_byte = (bf + sizeof(struct display_colour)*width*FONT_HEIGHT);
+    uint64_t byte_count = width*height - width*FONT_HEIGHT;
+
+    // This one also uses an assembly routine for speed to avoid a jittery shift
+    asm volatile(
+        "movq %2, %%rsi;"
+        "movq %1, %%rcx;"
+        "movq %0, %%rdi;"
+        "cld;"
+        "rep movsb;"
+        :
+        : "r"(bf), "r"(byte_count), "r"(start_byte)
+        : "rsi", "rcx", "rdi"
+    );
 }
 
 int rainbow() {
@@ -141,6 +181,7 @@ int rainbow() {
     }
 
     reset_colour();
+    prints("\n");
 
     return 0;
 }

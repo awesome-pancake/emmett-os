@@ -61,6 +61,7 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     prints("IDT successfully loaded. IDTR: ");
     printn((uint64_t)idtr);
     prints("\n\n");
+    rainbow();
     prints("Press ENTER to begin:");
 
     // Keyboard polling
