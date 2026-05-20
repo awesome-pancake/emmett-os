@@ -91,14 +91,13 @@ DISPLAY *GetDisplay()
 
   display->frame_buffer = (uint8_t*)gop->Mode->FrameBufferBase;
   display->vertical_resolution = gop->Mode->Info->VerticalResolution;
-  display->horizontal_resolution = gop->Mode->Info->HorizontalResolution;
+  display->horizontal_resolution = gop->Mode->Info->PixelsPerScanLine;
   return display;
 }
 
 EFI_STATUS GetEntryPoint(UINT64 header, UINT64 *start)
 {
   // Reads the entry point for the kernel off of the elf header
-  // TODO: prettify this code, and add error handling
   UINT64 entry_point = header + 0x18;
   *start = *(UINT64*)entry_point;
 
@@ -196,7 +195,6 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   }
 
   // Prepare for jump to kernel
-  // TODO: make new stack
   kernel_buffer += entry_offset;
   asm(
     "mov %1, %%rdi;"

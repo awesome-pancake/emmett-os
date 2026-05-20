@@ -56,23 +56,48 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     printn((uint64_t)idt);
     prints("\n");
 
-    // // Initialize interrupts
+    // Initialize interrupts
     struct idt_descriptor *idtr = init_idt(idt);
     prints("IDT successfully loaded. IDTR: ");
     printn((uint64_t)idtr);
-    prints("\n");
+    prints("\n\n");
+    prints("Press ENTER to begin:");
 
-    rainbow();
-
-    // Basic proof of concept keyboard polling system
-    set_port(PS2COMMAND, 0xF4);
+    // Keyboard polling
     uint8_t prev_code = 0;
+    bool shift_down = false;
     for(;;){
+        // Retrieve scancode from the PS/2 port
         uint8_t key_code = get_port(PS2DATA);
+
+        // Change the state if shift key is down
+        if(key_code == 0x2A){
+            shift_down = true;
+        } else if (key_code == 0xAA){
+            shift_down = false;
+        }
+
         if(prev_code != key_code){
             char character = convert_code(key_code);
-            printc(character);
+
+            // Display the character
+            if(shift_down){
+                printc('s');
+            } else {
+                printc(character);
+            }
+
             update_cursor(character);
+
+            // Detect a sent command
+            if(character == '\n'){
+
+                // Prepare console for next command
+                text_colour(COLOUR_PALETTE[3]);
+                prints("kernel$ ");
+                reset_colour();
+            }
+
             prev_code = key_code;
         }
     }
