@@ -3,6 +3,7 @@
 #include <memory.h>
 #include <interrupt.h>
 #include <error.h>
+#include <kstring.h>
 
 struct console_state console;
 
@@ -61,7 +62,14 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     prints("IDT successfully loaded. IDTR: ");
     printn((uint64_t)idtr);
     prints("\n\n");
-    rainbow();
+
+    // Test some string operations
+    char dest[16] = {'H', 'e', 'l', 'l', 'o', ' '};
+    char *src = "world!";
+    prints(kstrcat(dest, src));
+
+    prints("\n");
+
     prints("Press ENTER to begin:");
 
     // Keyboard polling

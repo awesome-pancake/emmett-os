@@ -135,7 +135,13 @@ void update_cursor(char character) {
         // Move the cursor forward normally
         if(console.cursor_x + 1 == width/FONT_WIDTH){
             console.cursor_x = 0;
-            console.cursor_y += (console.cursor_y + 1 == height/FONT_HEIGHT) ? 0 : 1;
+
+            // Move the cursor if text wraps around
+            if(console.cursor_y + 1 == height/FONT_HEIGHT){
+                move_console();
+            } else {
+                console.cursor_y += 1;
+            }
         } else {
             console.cursor_x++;
         }
@@ -157,7 +163,7 @@ void move_console() {
 
     // Define the start location and number of bytes to copy
     uint8_t *start_byte = (bf + sizeof(struct display_colour)*width*FONT_HEIGHT);
-    uint64_t byte_count = width*height - width*FONT_HEIGHT;
+    uint64_t dword_count = width*height - width*FONT_HEIGHT;
 
     // This one also uses an assembly routine for speed to avoid a jittery shift
     asm volatile(
@@ -165,10 +171,26 @@ void move_console() {
         "movq %1, %%rcx;"
         "movq %0, %%rdi;"
         "cld;"
-        "rep movsb;"
+        "rep movsl;"
         :
-        : "r"(bf), "r"(byte_count), "r"(start_byte)
+        : "r"(bf), "r"(dword_count), "r"(start_byte)
         : "rsi", "rcx", "rdi"
+    );
+
+    // Define start and count for new fill operation
+    start_byte = (bf + sizeof(struct display_colour)*(width*height - width*FONT_HEIGHT));
+    dword_count = width*FONT_HEIGHT;
+
+    // Fill bottom row
+    asm volatile(
+        "movl (%2), %%eax;"
+        "movq %1, %%rcx;"
+        "movq %0, %%rdi;"
+        "cld;"
+        "rep stosl;"
+        :
+        : "r"(start_byte), "r"(dword_count), "r"(&console.back_colour)
+        : "rax", "rcx", "rdi"
     );
 }
 
