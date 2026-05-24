@@ -38,15 +38,19 @@ extern uint8_t get_port(uint8_t port);
 // Sets a command for a legacy port
 extern void set_port(uint8_t port, uint8_t value);
 
-// Wrapper for the CONVERT_CODE array
-char convert_code(uint8_t scan_code);
+// Disables the 8259 legacy PIC
+void disable_legacy_pic();
 
-// Initializes the PS/2 controller
-void init_ps2();
+// Initializes the local APIC
+void init_lapic();
 
-extern const char CONVERT_CODE[256];
-extern const uint8_t PS2COMMAND;
-extern const uint8_t PS2DATA;
+// Enable hardware interrupts
+void start_interrupts();
 
-extern void int_DE();           // Division by zero exception handler
-extern void int_key();          // Keyboard interrupt handler
+void __attribute__((interrupt)) _division_isr(void *arg);           // Division by zero exception handler
+void __attribute__((interrupt)) _timer_isr(void *arg);              // Hardware timer interrupt
+
+extern const uint8_t PIC1COMMAND;   // Master PIC command port
+extern const uint8_t PIC1DATA;      // Master PIC data port
+extern const uint8_t PIC2COMMAND;   // Slave PIC command port
+extern const uint8_t PIC2DATA;      // Slave PIC data port

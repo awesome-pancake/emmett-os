@@ -4,6 +4,7 @@
 #include <interrupt.h>
 #include <error.h>
 #include <kstring.h>
+#include <keyboard.h>
 
 struct console_state console;
 
@@ -61,14 +62,9 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     struct idt_descriptor *idtr = init_idt(idt);
     prints("IDT successfully loaded. IDTR: ");
     printn((uint64_t)idtr);
-    prints("\n\n");
-
-    // Test some string operations
-    char dest[16] = {'H', 'e', 'l', 'l', 'o', ' '};
-    char *src = "world!";
-    prints(kstrcat(dest, src));
-
     prints("\n");
+    init_lapic();
+    prints("Local interrupt controller initialized.\n\n");
 
     prints("Press ENTER to begin:");
 
@@ -78,6 +74,11 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     for(;;){
         // Retrieve scancode from the PS/2 port
         uint8_t key_code = get_port(PS2DATA);
+
+        // Temporary debug block
+        // uint32_t current_count = get_lapic(0x390);
+        // printn((uint64_t)current_count);
+        // prints("\n");
 
         // Change the state if shift key is down
         if(key_code == 0x2A){

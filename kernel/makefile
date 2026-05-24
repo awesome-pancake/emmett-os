@@ -7,4 +7,4 @@ memory.o: src/memory.s
 	nasm -f elf64 src/memory.s -o memory.o
 
 kernel.elf: src/*.c memory.o interrupt.o
-	gcc -Wall src/*.c *.o -I inc -nostartfiles --entry kernel_main -o kernel.elf
+	gcc -mgeneral-regs-only -Wall src/*.c *.o -I inc -nostartfiles --entry kernel_main -o kernel.elf

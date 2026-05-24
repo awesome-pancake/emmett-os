@@ -1,4 +1,5 @@
 #include <interrupt.h>
+#include <console.h>
 
 void register_interrupt(struct gate_descriptor *addr, void (*interrupt)(), uint16_t segment, uint8_t attributes, uint8_t vector) {
 
@@ -15,11 +16,13 @@ void register_interrupt(struct gate_descriptor *addr, void (*interrupt)(), uint1
 struct idt_descriptor *init_idt(struct gate_descriptor *addr) {
 
     // Points to the currently used interrupt.
-    void (*curr_interrupt)() = &int_DE;
+    void (*curr_interrupt)() = &_division_isr;
 
     for(int i=0; i<=255; i++){
         register_interrupt(addr, curr_interrupt, 0x0008, 0x8E, (uint8_t)i);
     }
+
+    register_interrupt(addr, &_timer_isr, 0x0008, 0x8E, 0x20);  // Register the hardware timer service routine at vector 0x20
 
     struct idt_descriptor *idt_ptr = (struct idt_descriptor*)0x2000;
     
@@ -38,7 +41,7 @@ struct idt_descriptor *init_idt(struct gate_descriptor *addr) {
 
 void set_lapic(uint16_t reg, uint32_t value) {
 
-    // Ensure properly formatted input
+    // Ensure properly formatted input, ie. 16 byte alignment and within one page
     if(reg >= 0xFFF || reg % 0x10 != 0){
         return;
     }
@@ -53,7 +56,7 @@ void set_lapic(uint16_t reg, uint32_t value) {
 
 uint32_t get_lapic(uint16_t reg) {
 
-    // Ensure properly formatted input
+    // Ensure properly formatted input, ie. 16 byte alignment and within one page
     if(reg >= 0xFFF || reg % 0x10 != 0){
         return 0xFFFFFFFF;
     }
@@ -66,38 +69,66 @@ uint32_t get_lapic(uint16_t reg) {
     return *reg_ptr;
 }
 
-char convert_code(uint8_t scan_code) {
-    return CONVERT_CODE[scan_code];
+void disable_legacy_pic() {
+    set_port(PIC1DATA, 0xFF);
+    set_port(PIC2DATA, 0xFF);
 }
 
-void init_ps2() {
-    // TODO:
-    // Disable both ports
-    // Do some stuff
-    // Enable devices
-    // Success
+void init_lapic(){
+
+    // Disable the 8259 interrupt controllers
+    disable_legacy_pic();
+
+    // Send an EOI command to clear interrupts
+    set_lapic(0xB0, 0);
+
+    // Set task priority to 0
+    set_lapic(0x80, 0);
+    
+    // Configure spurious interrupt register
+    set_lapic(0x00F0, 0x1FF);
+    
+    // Enables hardware interrupts
+    start_interrupts();
+    
+    // Configure hardware timer register
+    uint32_t initial_count = 0x100000;
+    uint32_t divide_count = 0x10;
+    set_lapic(0x3E0, divide_count);         // Set division interval
+    set_lapic(0x320, (get_lapic(0x320) & 0x0FF00) | 0x20020);         // Set the timer vector
+    set_lapic(0x380, initial_count);        // Set initial count
+
 }
 
-// PS/2 command and data ports
-const uint8_t PS2COMMAND = 0x64;
-const uint8_t PS2DATA = 0x60;
+void start_interrupts() {
+    asm volatile(
+        "sti;"
+    );
+}
 
-// Converts a PS/2 scancode into a character
-const char CONVERT_CODE[256] = {
-    '\0', '\0', '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',  '0',  '-',  '=',  '\b', '\0',
-    'q',  'w',  'e',  'r',  't',  'y',  'u',  'i',  'o',  'p',  '[',  ']',  '\n', '\0', 'a',  's',
-    'd',  'f',  'g',  'h',  'j',  'k',  'l',  ';',  '\'', '`',  '\0', '\\', 'z',  'x',  'c',  'v',
-    'b',  'n',  'm',  ',',  '.',  '/',  '\0', '*',  '\0', ' ',  '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-};
+void __attribute__((interrupt)) _timer_isr(void *arg) {
+
+    prints("\nTimer interrupt\n");
+    set_lapic(0xB0, 0);
+}
+
+void __attribute__((interrupt)) _division_isr(void *arg) {
+
+    asm volatile(
+        "movq $1, %%rcx"
+        :
+        :
+        : "%rcx"
+    );
+
+    text_colour(COLOUR_PALETTE[0]);
+    prints("\nDivision by zero exception\n");
+    reset_colour();
+
+    set_lapic(0xB0, 0);
+}
+
+const uint8_t PIC1COMMAND = 0x20;
+const uint8_t PIC1DATA = 0x21;
+const uint8_t PIC2COMMAND = 0xA0;
+const uint8_t PIC2DATA = 0xA1;
