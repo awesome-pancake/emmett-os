@@ -80,23 +80,23 @@ void init_lapic(){
     disable_legacy_pic();
 
     // Send an EOI command to clear interrupts
-    set_lapic(0xB0, 0);
+    set_lapic(LAPIC_EOI, 0);
 
     // Set task priority to 0
-    set_lapic(0x80, 0);
+    set_lapic(LAPIC_TPR, 0);
     
     // Configure spurious interrupt register
-    set_lapic(0x00F0, 0x1FF);
+    set_lapic(LAPIC_SPURIOUS, 0x1FF);
     
-    // Enables hardware interrupts
+    // Enable hardware interrupts
     start_interrupts();
     
     // Configure hardware timer register
     uint32_t initial_count = 0x100000;
     uint32_t divide_count = 0x10;
-    set_lapic(0x3E0, divide_count);         // Set division interval
-    set_lapic(0x320, (get_lapic(0x320) & 0x0FF00) | 0x20020);         // Set the timer vector
-    set_lapic(0x380, initial_count);        // Set initial count
+    set_lapic(LAPIC_DIVIDE, divide_count);         // Set division interval
+    set_lapic(LAPIC_LVT_TIMER, (get_lapic(LAPIC_LVT_TIMER) & 0x0FF00) | 0x20020);         // Set the timer vector
+    set_lapic(LAPIC_INITIAL, initial_count);        // Set initial count
 
 }
 
@@ -108,8 +108,8 @@ void start_interrupts() {
 
 void __attribute__((interrupt)) _timer_isr(void *arg) {
 
-    prints("\nTimer interrupt\n");
-    set_lapic(0xB0, 0);
+    prints("\nTimer interrupt");
+    set_lapic(LAPIC_EOI, 0);
 }
 
 void __attribute__((interrupt)) _division_isr(void *arg) {
@@ -122,10 +122,8 @@ void __attribute__((interrupt)) _division_isr(void *arg) {
     );
 
     text_colour(COLOUR_PALETTE[0]);
-    prints("\nDivision by zero exception\n");
+    prints("\nDivision by zero exception");
     reset_colour();
-
-    set_lapic(0xB0, 0);
 }
 
 const uint8_t PIC1COMMAND = 0x20;

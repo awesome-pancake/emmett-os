@@ -75,11 +75,6 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
         // Retrieve scancode from the PS/2 port
         uint8_t key_code = get_port(PS2DATA);
 
-        // Temporary debug block
-        // uint32_t current_count = get_lapic(0x390);
-        // printn((uint64_t)current_count);
-        // prints("\n");
-
         // Change the state if shift key is down
         if(key_code == 0x2A){
             shift_down = true;
