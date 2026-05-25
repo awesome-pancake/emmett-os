@@ -21,6 +21,19 @@ int kstrcmp(char *s1, char *s2) {
     return 0;
 }
 
+int kstrncmp(char *s1, char *s2, int n) {
+
+    // Iterate through both strings, exiting if the limit is reached or if either has a null terminator
+    for(int i=0; i<n && (s1[i] != '\0' || s2[i] != '\0'); i++){
+        if(s1[i] - s2[i] > 0){
+            return 1;
+        } else if (s1[i] - s2[i] < 0){
+            return -1;
+        }
+    }
+    return 0;
+}
+
 char *kstrtok_r(char *str, const char delim, char **saveptr) {
 
     // Sets the initial state of the tokenizer

@@ -10,6 +10,9 @@ int kstrlen(char *str);
 // Compares two strings against one another
 int kstrcmp(char *s1, char *s2);
 
+// Compares two strings with a character limit
+int kstrncmp(char *s1, char *s2, int n);
+
 // Splits a string into tokens
 char *kstrtok_r(char *str, const char delim, char **saveptr);
 
