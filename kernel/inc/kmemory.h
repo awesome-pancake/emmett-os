@@ -3,6 +3,10 @@
     #define KERNEL_ENTRY 1
 #endif
 
+#ifndef KMEMORY
+    #define KMEMORY 1
+#endif
+
 extern const int MAP_SIZE;
 
 // Types of memory that are available

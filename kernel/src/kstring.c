@@ -1,5 +1,12 @@
-#include <kstring.h>
-#include <console.h>
+#ifndef KSTRING
+    #include <kstring.h>
+    #define KSTRING 1
+#endif
+
+#ifndef CONSOLE
+    #include <console.h>
+    #define CONSOLE 1
+#endif
 
 int kstrlen(char *str) {
 
@@ -82,4 +89,8 @@ char *kstrcat(char *dest, char *src) {
     dest[dest_length+i] = '\0';
 
     return dest;
+}
+
+char ktoupper(char ch) {
+    return ch ^ 32;
 }

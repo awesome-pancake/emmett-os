@@ -1,5 +1,12 @@
-#include <memory.h>
-#include <console.h>
+#ifndef KMEMORY
+    #include <kmemory.h>
+    #define KMEMORY 1
+#endif
+
+#ifndef CONSOLE
+    #include <console.h>
+    #define CONSOLE 1
+#endif
 
 // Different definition of a null pointer since the address 0 may be used.
 #define K_NULL ((void*)0xFFFFFFFFFFFFFFFF);

@@ -3,6 +3,10 @@
     #define KERNEL_ENTRY 1
 #endif
 
+#ifndef INTERRUPT
+    #define INTERRUPT 1
+#endif
+
 // Holds the different registers used in Local APIC, which is helpful for setting up interrupts.
 typedef enum {
     LAPIC_ID = 0x20,                // Local APIC ID Register

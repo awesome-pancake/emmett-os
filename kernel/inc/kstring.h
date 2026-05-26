@@ -2,6 +2,10 @@
     #include <start.h>
 #endif
 
+#ifndef KSTRING
+    #define KSTRING 1
+#endif
+
 // Below are a couple functions from string.h in the C library that I rewrote for this project.
 
 // Finds the length of a given string not including the null terminator
@@ -21,3 +25,6 @@ char *kstrchr(char *str, char c);
 
 // Concatenates src to the end of dest. The space allocated for dest must be at least equal to the sum of src and dest.
 char *kstrcat(char *dest, char *src);
+
+// Converts a character into uppercase, including some special keyboard characters like . to >
+char ktoupper(char ch);

@@ -1,10 +1,4 @@
-#include <start.h>
-#include <console.h>
-#include <memory.h>
-#include <interrupt.h>
-#include <error.h>
-#include <kstring.h>
-#include <keyboard.h>
+#include <emmettos.h>
 
 struct console_state console;
 
@@ -75,35 +69,9 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
         // Retrieve scancode from the PS/2 port
         uint8_t key_code = get_port(PS2DATA);
 
-        // Change the state if shift key is down
-        if(key_code == 0x2A){
-            shift_down = true;
-        } else if (key_code == 0xAA){
-            shift_down = false;
-        }
-
+        // Ensure that the scan code is different before handling it
         if(prev_code != key_code){
-            char character = convert_code(key_code);
-
-            // Display the character
-            if(shift_down){
-                printc('s');
-            } else {
-                printc(character);
-            }
-
-            update_cursor(character);
-
-            // Detect a sent command
-            if(character == '\n'){
-
-                // Prepare console for next command
-                text_colour(COLOUR_PALETTE[3]);
-                prints("kernel$ ");
-                reset_colour();
-            }
-
-            prev_code = key_code;
+            prev_code = poll_keyboard(key_code, &shift_down);
         }
     }
 

@@ -1,5 +1,12 @@
-#include <interrupt.h>
-#include <console.h>
+#ifndef INTERRUPT
+    #include <interrupt.h>
+    #define INTERRUPT 1
+#endif
+
+#ifndef CONSOLE
+    #include <console.h>
+    #define CONSOLE 1
+#endif
 
 void register_interrupt(struct gate_descriptor *addr, void (*interrupt)(), uint16_t segment, uint8_t attributes, uint8_t vector) {
 
@@ -108,7 +115,7 @@ void start_interrupts() {
 
 void __attribute__((interrupt)) _timer_isr(void *arg) {
 
-    prints("\nTimer interrupt");
+    // prints("\nTimer interrupt");
     set_lapic(LAPIC_EOI, 0);
 }
 

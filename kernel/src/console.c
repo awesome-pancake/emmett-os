@@ -1,4 +1,7 @@
-#include <console.h>
+#ifndef CONSOLE
+    #include <console.h>
+    #define CONSOLE 1
+#endif
 
 int fill_screen(struct display *disp, struct display_colour colour) {
     uint8_t *bf = disp->frame_buffer;

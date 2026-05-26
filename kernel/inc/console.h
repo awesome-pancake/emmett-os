@@ -1,5 +1,10 @@
 #ifndef KERNEL_ENTRY
     #include <start.h>
+    #define KERNEL_ENTRY 1
+#endif
+
+#ifndef CONSOLE
+    #define CONSOLE 1
 #endif
 
 // Fills the screen with a given colour

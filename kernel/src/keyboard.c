@@ -1,4 +1,18 @@
-#include <keyboard.h>
+
+#ifndef KEYBOARD
+    #include <keyboard.h>
+    #define KEYBOARD 1
+#endif
+
+#ifndef CONSOLE
+    #include <console.h>
+    #define CONSOLE 1
+#endif
+
+#ifndef KSTRING
+    #include <kstring.h>
+    #define KSTRING 1
+#endif
 
 char convert_code(uint8_t scan_code) {
     return CONVERT_CODE[scan_code];
@@ -12,12 +26,40 @@ void init_ps2() {
     // Success
 }
 
-void poll_keyboard(){
-    return;
+uint8_t poll_keyboard(uint8_t scan_code, bool *shift_state){
+
+    if(scan_code == 0x2A) {             // Handles shift down events
+        *shift_state = true;
+        return scan_code;
+    } else if (scan_code == 0xAA) {     // Handles shift up events
+        *shift_state = false;
+        return scan_code;
+    }
+
+    char character = convert_code(scan_code);
+
+    // Display the character
+    if(*shift_state){
+        printc(ktoupper(character));
+    } else {
+        printc(character);
+    }
+
+    update_cursor(character);
+
+    // Detect a sent command
+    if(character == '\n'){
+
+        // Prepare console for next command
+        text_colour(COLOUR_PALETTE[3]);
+        prints("kernel$ ");
+        reset_colour();
+    }
+
+    return scan_code;
 }
 
 char input_buffer[32] = {0};    // Console input stream
-bool shifted = false;           // Holds state of shift key
 
 const uint8_t PS2COMMAND = 0x64;    // PS/2 command port
 const uint8_t PS2DATA = 0x60;       // PS/2 data port
