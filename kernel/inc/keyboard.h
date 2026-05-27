@@ -7,6 +7,9 @@
     #define KEYBOARD 1
 #endif
 
+// Length of the input stream in bytes
+#define BUFFER_LENGTH (65)
+
 // Wrapper for the CONVERT_CODE array
 char convert_code(uint8_t scan_code);
 
@@ -16,11 +19,13 @@ void init_ps2();
 // Updates the state of the console based on keyboard polling and returns the current scan code
 uint8_t poll_keyboard(uint8_t scan_code, bool *shift_state);
 
+// Resets the input stream
+void flush_input();
+
 // Some global variables for keyboard polling
-extern char input_buffer[32];
+extern char input_buffer[BUFFER_LENGTH];
 
 // Constants relevant to the legacy keyboard
-
 extern const char CONVERT_CODE[256];
 extern const uint8_t PS2COMMAND;
 extern const uint8_t PS2DATA;

@@ -17,7 +17,11 @@ int kstrcmp(char *s1, char *s2);
 // Compares two strings with a character limit
 int kstrncmp(char *s1, char *s2, int n);
 
-// Splits a string into tokens
+/*
+Splits a string into tokens.
+
+The first call takes the string as input and returns the first token. Subsequent calls will return the remaining tokens one at a time and take NULL as an input for the string.
+*/
 char *kstrtok_r(char *str, const char delim, char **saveptr);
 
 // Determines if a character is in a string
@@ -27,4 +31,7 @@ char *kstrchr(char *str, char c);
 char *kstrcat(char *dest, char *src);
 
 // Converts a character into uppercase, including some special keyboard characters like . to >
-char ktoupper(char ch);
+char ktoupper(uint8_t ch);
+
+// Concatenates src to the end of dest with a character limit. The space allocated for dest must be at least equal to the sum of src and dest.
+char *kstrncat(char *dest, char *src, int n);

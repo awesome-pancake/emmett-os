@@ -118,37 +118,32 @@ void update_cursor(char character) {
         return;
     } else if (character == '\0') { // Null
         return;
-    }
-
-    // Move other characters forward normally TODO: make this consistent
-    switch(character){
-        case '\n':
+    } else if (character == '\n') { // Newline
         if(console.cursor_y + 1 == height/FONT_HEIGHT){
             move_console();
         } else {
             console.cursor_y += 1;
         }
-        // console.cursor_y += (console.cursor_y + 1 == height/FONT_HEIGHT) ? 0 : 1;
         console.cursor_x = 0;
-        break;
-        case '\r':
-        console.cursor_x = 0;
-        break;
-        default:
-        // Move the cursor forward normally
-        if(console.cursor_x + 1 == width/FONT_WIDTH){
-            console.cursor_x = 0;
+        return;
 
-            // Move the cursor if text wraps around
-            if(console.cursor_y + 1 == height/FONT_HEIGHT){
-                move_console();
-            } else {
-                console.cursor_y += 1;
-            }
+    } else if (character == '\r') { // Carriage Return
+        console.cursor_x = 0;
+        return;
+    }
+
+    // Move the cursor forward normally
+    if(console.cursor_x + 1 == width/FONT_WIDTH){
+        console.cursor_x = 0;
+
+        // Move the cursor if text wraps around
+        if(console.cursor_y + 1 == height/FONT_HEIGHT){
+            move_console();
         } else {
-            console.cursor_x++;
+            console.cursor_y += 1;
         }
-        break;
+    } else {
+        console.cursor_x++;
     }
 
     // Print the cursor indicator character
@@ -156,8 +151,6 @@ void update_cursor(char character) {
 }
 
 void move_console() {
-
-    // TODO: make sure stuff on the bottom row is also moved upwards
 
     // Some helpful constants
     uint8_t *bf = console.display->frame_buffer;

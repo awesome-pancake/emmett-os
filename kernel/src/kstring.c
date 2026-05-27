@@ -91,6 +91,50 @@ char *kstrcat(char *dest, char *src) {
     return dest;
 }
 
-char ktoupper(char ch) {
-    return ch ^ 32;
+char ktoupper(uint8_t ch) {
+
+    // Handles lowercase characters
+    if(ch >= 97 && ch <= 122){
+        return ch ^ 32;
+    }
+
+    // Handles some numbers
+    if(ch == 49 || (ch >= 51 && ch <= 53)){
+        return ch - 16;
+    }
+
+    // Some miscellaneous characters
+    if(ch == '2'){ return '@';}
+    if(ch == '.'){ return '>';}
+    if(ch == ','){ return '<';}
+    if(ch == '/'){ return '?';}
+    if(ch == ';'){ return ':';}
+    if(ch == '\''){ return '"';}
+    if(ch == '-'){ return '_';}
+    if(ch == '='){ return '+';}
+    if(ch == '6'){ return '^';}
+    if(ch == '7'){ return '&';}
+    if(ch == '8'){ return '*';}
+    if(ch == '9'){ return '(';}
+    if(ch == '0'){ return ')';}
+    if(ch == '`'){ return '~';}
+    if(ch == '['){ return '{';}
+    if(ch == ']'){ return '}';}
+    if(ch == '\\'){ return '|';}
+
+    // Returns the character if no matches were found
+    return ch;
+}
+
+char *kstrncat(char *dest, char *src, int n) {
+
+    int dest_length = kstrlen(dest);
+
+    int i;
+    for(i=0; i < n; i++){
+        dest[dest_length + i] = src[i];
+    }
+    dest[dest_length+i] = '\0';
+
+    return dest;
 }
