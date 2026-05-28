@@ -258,3 +258,22 @@ struct gdt_descriptor *init_gdt(struct segment_descriptor *addr) {
 
     return gdt_ptr;
 }
+
+void *push_heap(struct heap *curr_heap, int bytes) {
+    return NULL;
+}
+
+struct heap *init_heap() {
+
+    // struct heap *new_heap = NULL;
+
+    // for(int i=0; i<memory_map->map_size/DESCRIPTOR_SIZE; i++){
+    //     // Initialize new header at start of available memory chunk
+    //     if(memory_map->descriptor_table[i].type == EfiConventionalMemory){
+    //         new_heap = (struct heap*)memory_map->descriptor_table[i].physical_start;
+    //         return new_heap;
+    //     }
+    // }
+
+    return NULL;
+}

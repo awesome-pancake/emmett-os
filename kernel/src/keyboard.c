@@ -43,44 +43,79 @@ uint8_t poll_keyboard(uint8_t scan_code, bool *shift_state){
         return scan_code;
     }
 
-    // Display the character TODO: handle backspaces
+    // Display the character
     if(*shift_state){
         char upper_char = ktoupper(character);
         printc(upper_char);
-        if(character != '\n'){
+
+        if(character != '\n' && character != '\b'){
             kstrncat(input_buffer, &upper_char, 1);
         }
     } else {
         printc(character);
-        if(character != '\n'){
+
+        if(character != '\n' && character != '\b'){
             kstrncat(input_buffer, &character, 1);
         }
     }
 
-    update_cursor(character);
+    // Handles backspaces
+    int input_length = kstrlen(input_buffer);
+    if(character == '\b') {
+        input_buffer[input_length - 1] = '\0';
+    }
+
+    // Doesn't allow backspace beyond the start of the input buffer and fixes some newline formatting stuff
+    if((character != '\b' || input_buffer[0] != '\0') && character != '\n'){
+        update_cursor(character);
+    }
 
     // Detect a sent command
-    if(character == '\n'){
+    if(character != '\n'){
+        return scan_code;
+    }
 
-        // prints(input_buffer);
-        // prints("\n");
-        // flush_input();
+    char *save_ptr = NULL;
+    char *token = kstrtok_r(input_buffer, ' ', &save_ptr);
+    bool parse_state = false; // Set to false if reading a command, and true if reading arguments
+    char *curr_command = NULL;
 
-        char *save_ptr = NULL;
-        char *token = kstrtok_r(input_buffer, ' ', &save_ptr);
-        while(token != NULL){
-            prints(token);
+    // Iterate through every token
+    while(token != NULL && input_length > 0){
+
+        // Rainbow command
+        if(!parse_state && kstrncmp("rainbow", token, 8) == 0){
+            parse_state = true;
             prints("\n");
-            token = kstrtok_r(NULL, ' ', &save_ptr);
+            rainbow();
         }
 
-        flush_input();
+        // Echo command
+        if(!parse_state && kstrncmp("echo", token, 5) == 0){
+            prints("\n");
+            parse_state = true;
+            curr_command = token;
+        } else if (parse_state && kstrncmp("echo", curr_command, 4) == 0) {
+            prints(token);
+            prints(" ");
+        }
 
-        // Prepare console for next command
-        text_colour(COLOUR_PALETTE[3]);
-        prints("kernel$ ");
-        reset_colour();
+        // Sends an unknown command error
+        if(!parse_state){
+            error("\nCould not find command.");
+            break;
+        }
+
+        token = kstrtok_r(NULL, ' ', &save_ptr);
     }
+
+    flush_input();
+
+    // Prepare console for next command
+    text_colour(COLOUR_PALETTE[3]);
+    prints("\n");
+    prints("kernel$ ");
+    reset_colour();
 
     return scan_code;
 }

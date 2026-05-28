@@ -199,7 +199,6 @@ int rainbow() {
     }
 
     reset_colour();
-    prints("\n");
 
     return 0;
 }
@@ -235,6 +234,15 @@ void reset_colour() {
     console.text_colour.green = 0xFF;
     console.text_colour.red = 0xFF;
     console.text_colour.reserved = 0x00;
+}
+
+int error(char *str) {
+
+    text_colour(COLOUR_PALETTE[0]);
+    int return_value = prints(str);
+    reset_colour();
+
+    return return_value;
 }
 
 const uint16_t FONT_HEIGHT = 16;

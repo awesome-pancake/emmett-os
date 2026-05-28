@@ -60,11 +60,16 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     init_lapic();
     prints("Local interrupt controller initialized.\n\n");
 
-    prints("Press ENTER to begin:");
+    // Prepare console for first command
+    text_colour(COLOUR_PALETTE[3]);
+    prints("kernel$ ");
+    reset_colour();
 
     // Keyboard polling
     uint8_t prev_code = 0;
     bool shift_down = false;
+
+    flush_input();
     for(;;){
         // Retrieve scancode from the PS/2 port
         uint8_t key_code = get_port(PS2DATA);

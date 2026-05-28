@@ -7,6 +7,35 @@
     #define CONSOLE 1
 #endif
 
+// Font information
+struct font{
+    uint8_t     rows[128][16];
+};
+
+// Colour for frame buffer
+struct display_colour {
+    uint8_t     blue;
+    uint8_t     green;
+    uint8_t     red;
+    uint8_t     reserved;
+};
+
+// Holds information about the display
+struct display{
+    uint8_t     *frame_buffer;
+    uint32_t    horizontal_resolution;
+    uint32_t    vertical_resolution;
+};
+
+// Holds state of the console
+struct console_state {
+    struct display              *display;
+    uint8_t                     cursor_x;
+    uint8_t                     cursor_y;
+    struct display_colour       back_colour;
+    struct display_colour       text_colour;
+};
+
 // Fills the screen with a given colour
 int fill_screen(struct display *disp, struct display_colour colour);
 
@@ -21,6 +50,9 @@ int prints(char *str);
 
 // Prints a number
 int printn(uint64_t num);
+
+// Prints an error
+int error(char *str);
 
 // Moves the cursor according to the character
 void update_cursor(char character);
@@ -44,3 +76,4 @@ extern const uint16_t FONT_WIDTH;
 extern const uint16_t FONT_HEIGHT;
 extern const struct font FIXEDSYS;
 extern const struct display_colour COLOUR_PALETTE[8];
+extern struct console_state console;    // Holds the state of the console

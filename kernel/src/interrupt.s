@@ -1,3 +1,5 @@
+section .note.GNU-stack noalloc noexec nowrite progbits
+
 global get_port
 global set_port
 
