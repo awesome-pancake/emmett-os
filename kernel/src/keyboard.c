@@ -59,15 +59,15 @@ uint8_t poll_keyboard(uint8_t scan_code, bool *shift_state){
         }
     }
 
+    // Doesn't allow backspace beyond the start of the input buffer and fixes some newline formatting stuff
+    if((character != '\b' || input_buffer[0] != '\0') && character != '\n'){
+        update_cursor(character);
+    }
+
     // Handles backspaces
     int input_length = kstrlen(input_buffer);
     if(character == '\b') {
         input_buffer[input_length - 1] = '\0';
-    }
-
-    // Doesn't allow backspace beyond the start of the input buffer and fixes some newline formatting stuff
-    if((character != '\b' || input_buffer[0] != '\0') && character != '\n'){
-        update_cursor(character);
     }
 
     // Detect a sent command
@@ -88,6 +88,20 @@ uint8_t poll_keyboard(uint8_t scan_code, bool *shift_state){
             parse_state = true;
             prints("\n");
             rainbow();
+        }
+
+        // Clear screen command
+        if(!parse_state && kstrncmp("cls", token, 4) == 0){
+            parse_state = true;
+            prints("\n");
+            cls();
+        }
+
+        // Help command
+        if(!parse_state && kstrncmp("help", token, 5) == 0){
+            parse_state = true;
+            prints("\n");
+            help();
         }
 
         // Echo command

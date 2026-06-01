@@ -38,7 +38,29 @@ int fill_screen(struct display *disp, struct display_colour colour) {
 }
 
 int cls() {
+    console.cursor_x = 0;
+    console.cursor_y = 0;
     return fill_screen(console.display, console.back_colour);
+}
+
+int help(){
+    prints("Commands:\n");
+    prints("cls - Clears the console.\n");
+    prints("help - Displays a help prompt.\n");
+    prints("echo [input] - Echoes text to the console output\n");
+    prints("rainbow - Prints a rainbow to the screen\n\n");
+    prints("Environment variables:\n");
+    prints("$cursor_x - X position of the cursor.\n");
+    prints("$cursor_y - Y position of the cursor.\n");
+    prints("$back_r - The red component of the background colour.\n");
+    prints("$back_g - The green component of the background colour.\n");
+    prints("$back_b - The blue component of the background colour.\n");
+    prints("$text_r - The red component of the text colour.\n");
+    prints("$text_g - The green component of the text colour.\n");
+    prints("$text_b - The blue component of the text colour.\n\n");
+    prints("Using environment variables:\n");
+    prints("To use environment variables, substitute the name of the variable as an argument for the command. eg. echo $text_g will print the contents of the $text_g variable.\n");
+    return 0;
 }
 
 int printc(char c) {

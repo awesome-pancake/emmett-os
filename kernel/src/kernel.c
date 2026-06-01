@@ -60,6 +60,8 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     init_lapic();
     prints("Local interrupt controller initialized.\n\n");
 
+    prints("Run 'help' for a list of commands.\n");
+
     // Prepare console for first command
     text_colour(COLOUR_PALETTE[3]);
     prints("kernel$ ");

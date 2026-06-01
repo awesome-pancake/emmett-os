@@ -42,6 +42,9 @@ int fill_screen(struct display *disp, struct display_colour colour);
 // Clears the screen
 int cls();
 
+// Prints instructions
+int help();
+
 // Displays a character at the current console cursor position
 int printc(char c);
 
