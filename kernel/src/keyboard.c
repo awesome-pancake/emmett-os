@@ -77,11 +77,56 @@ uint8_t poll_keyboard(uint8_t scan_code, bool *shift_state){
 
     char *save_ptr = NULL;
     char *token = kstrtok_r(input_buffer, ' ', &save_ptr);
-    bool parse_state = false; // Set to false if reading a command, and true if reading arguments
-    char *curr_command = NULL;
+
+    int argc = 0;
+    char *argv[32];
 
     // Iterate through every token
     while(token != NULL && input_length > 0){
+
+        argv[argc] = token;
+
+        // Ensure argv does not overflow
+        if(argc < ARGV_SIZE - 1){
+            argc += 1;
+        } else {
+            error("\nToo many command arguments. Parsing first 32:");
+            break;
+        }
+
+        token = kstrtok_r(NULL, ' ', &save_ptr);
+    }
+    argv[argc] = NULL;
+
+    // Parse the command and reset the console
+    parse_command(argc, argv);
+    flush_input();
+
+    // Prepare console for next command
+    text_colour(COLOUR_PALETTE[3]);
+    prints("\n");
+    prints("kernel$ ");
+    reset_colour();
+
+    return scan_code;
+}
+
+void flush_input() {
+    
+    for(int i=0; i<BUFFER_LENGTH; i++){
+        input_buffer[i] = '\0';
+    }
+}
+
+int parse_command(int argc, char **argv) {
+
+    bool parse_state = false; // Set to false if reading a command, and true if reading arguments
+    char *curr_command = NULL;
+
+    // TODO: replace this with a proper command implementation
+    for(int i=0; i<argc; i++){
+
+        char *token = argv[i];
 
         // Rainbow command
         if(!parse_state && kstrncmp("rainbow", token, 8) == 0){
@@ -117,31 +162,14 @@ uint8_t poll_keyboard(uint8_t scan_code, bool *shift_state){
         // Sends an unknown command error
         if(!parse_state){
             error("\nCould not find command.");
-            break;
+            return -1;
         }
-
-        token = kstrtok_r(NULL, ' ', &save_ptr);
     }
-
-    flush_input();
-
-    // Prepare console for next command
-    text_colour(COLOUR_PALETTE[3]);
-    prints("\n");
-    prints("kernel$ ");
-    reset_colour();
-
-    return scan_code;
-}
-
-void flush_input() {
-    
-    for(int i=0; i<BUFFER_LENGTH; i++){
-        input_buffer[i] = '\0';
-    }
+    return 0;
 }
 
 char input_buffer[BUFFER_LENGTH] = {0};    // Console input stream
+const int ARGV_SIZE = 33;
 
 const uint8_t PS2COMMAND = 0x64;    // PS/2 command port
 const uint8_t PS2DATA = 0x60;       // PS/2 data port
