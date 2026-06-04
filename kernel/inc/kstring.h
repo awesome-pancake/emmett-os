@@ -35,3 +35,9 @@ char ktoupper(uint8_t ch);
 
 // Concatenates src to the end of dest with a character limit. The space allocated for dest must be at least equal to the sum of src and dest.
 char *kstrncat(char *dest, char *src, int n);
+
+// Checks if a character is a digit
+bool kisdigit(char c);
+
+// Converts a number stored in a string into a number
+uint64_t katoi(const char *nstr);

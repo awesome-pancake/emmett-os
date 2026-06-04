@@ -3,6 +3,11 @@
     #define CONSOLE 1
 #endif
 
+#ifndef COMMAND
+    #include <command.h>
+    #define COMMAND 1
+#endif
+
 #ifndef KSTRING
     #include <kstring.h>
     #define KSTRING 1

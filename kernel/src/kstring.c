@@ -138,3 +138,35 @@ char *kstrncat(char *dest, char *src, int n) {
 
     return dest;
 }
+
+bool kisdigit(char c) {
+    return (c <= 0x39 && c >= 0x30);
+}
+
+uint64_t katoi(const char *nstr) {
+
+    uint64_t num = 0;
+
+    // Parse hexadecimal
+    if(nstr[0] == 'x') {
+        
+        for(int i=0; nstr[i] != '\0'; i++) {
+            num *= 16;
+
+            if(kisdigit(nstr[i])){  // Handles regular digits
+                num += (uint64_t)nstr[i] - 0x30;
+            } 
+            else if (kstrchr("abcdefABCDEF", nstr[i]) != NULL) {    // Handles hexadecimal digits
+                num += (uint64_t)ktoupper(nstr[i]) - 55;
+            }
+        }
+    }
+
+    // Parse decimal numbers otherwise
+    for(int i=0; nstr[i] != '\0' && kisdigit(nstr[i]); i++) {
+        num *= 10;
+        num += (uint64_t)nstr[i] - 0x30;
+    }
+
+    return num;
+}

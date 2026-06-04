@@ -14,6 +14,11 @@
     #define KSTRING 1
 #endif
 
+#ifndef COMMAND
+    #include <command.h>
+    #define COMMAND 1
+#endif
+
 char convert_code(uint8_t scan_code) {
     return CONVERT_CODE[scan_code];
 }
@@ -118,58 +123,7 @@ void flush_input() {
     }
 }
 
-int parse_command(int argc, char **argv) {
-
-    bool parse_state = false; // Set to false if reading a command, and true if reading arguments
-    char *curr_command = NULL;
-
-    // TODO: replace this with a proper command implementation
-    for(int i=0; i<argc; i++){
-
-        char *token = argv[i];
-
-        // Rainbow command
-        if(!parse_state && kstrncmp("rainbow", token, 8) == 0){
-            parse_state = true;
-            prints("\n");
-            rainbow();
-        }
-
-        // Clear screen command
-        if(!parse_state && kstrncmp("cls", token, 4) == 0){
-            parse_state = true;
-            prints("\n");
-            cls();
-        }
-
-        // Help command
-        if(!parse_state && kstrncmp("help", token, 5) == 0){
-            parse_state = true;
-            prints("\n");
-            help();
-        }
-
-        // Echo command
-        if(!parse_state && kstrncmp("echo", token, 5) == 0){
-            prints("\n");
-            parse_state = true;
-            curr_command = token;
-        } else if (parse_state && kstrncmp("echo", curr_command, 4) == 0) {
-            prints(token);
-            prints(" ");
-        }
-
-        // Sends an unknown command error
-        if(!parse_state){
-            error("\nCould not find command.");
-            return -1;
-        }
-    }
-    return 0;
-}
-
 char input_buffer[BUFFER_LENGTH] = {0};    // Console input stream
-const int ARGV_SIZE = 33;
 
 const uint8_t PS2COMMAND = 0x64;    // PS/2 command port
 const uint8_t PS2DATA = 0x60;       // PS/2 data port

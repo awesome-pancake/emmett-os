@@ -37,25 +37,25 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     // struct segment_descriptor *gdt = (struct segment_descriptor*)allocate_pages(&memory_map, 1);
     struct segment_descriptor *gdt = (struct segment_descriptor*)0;
     prints("Space for GDT allocated: ");
-    printn((uint64_t)gdt);
+    printn((uint64_t)gdt, 64);
     prints("\n");
 
     // Initialize GDT
     struct gdt_descriptor *gdtr = init_gdt(gdt);
     prints("GDT successfully loaded. GDTR: ");
-    printn((uint64_t)gdtr);
+    printn((uint64_t)gdtr, 64);
     prints("\n");
 
     // Allocate space for IDT
     struct gate_descriptor *idt = (struct gate_descriptor*)0x1000;
     prints("Space for IDT allocated: ");
-    printn((uint64_t)idt);
+    printn((uint64_t)idt, 64);
     prints("\n");
 
     // Initialize interrupts
     struct idt_descriptor *idtr = init_idt(idt);
     prints("IDT successfully loaded. IDTR: ");
-    printn((uint64_t)idtr);
+    printn((uint64_t)idtr, 64);
     prints("\n");
     init_lapic();
     prints("Local interrupt controller initialized.\n\n");

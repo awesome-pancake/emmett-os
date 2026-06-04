@@ -37,32 +37,6 @@ int fill_screen(struct display *disp, struct display_colour colour) {
     return 0;
 }
 
-int cls() {
-    console.cursor_x = 0;
-    console.cursor_y = 0;
-    return fill_screen(console.display, console.back_colour);
-}
-
-int help(){
-    prints("Commands:\n");
-    prints("cls - Clears the console.\n");
-    prints("help - Displays a help prompt.\n");
-    prints("echo [input] - Echoes text to the console output\n");
-    prints("rainbow - Prints a rainbow to the screen\n\n");
-    prints("Environment variables:\n");
-    prints("$cursor_x - X position of the cursor.\n");
-    prints("$cursor_y - Y position of the cursor.\n");
-    prints("$back_r - The red component of the background colour.\n");
-    prints("$back_g - The green component of the background colour.\n");
-    prints("$back_b - The blue component of the background colour.\n");
-    prints("$text_r - The red component of the text colour.\n");
-    prints("$text_g - The green component of the text colour.\n");
-    prints("$text_b - The blue component of the text colour.\n\n");
-    prints("Using environment variables:\n");
-    prints("To use environment variables, substitute the name of the variable as an argument for the command. eg. echo $text_g will print the contents of the $text_g variable.\n");
-    return 0;
-}
-
 int printc(char c) {
     
     // Frame buffer and related helpful constants
@@ -108,15 +82,17 @@ int prints(char *str) {
     return 0;
 }
 
-int printn(uint64_t num) {
-    // Uses the accumulator pattern to convert a number into a hexadecimal string
+int printn(uint64_t num, uint8_t size) {
+    // Converts a number into a hexadecimal string
     char nib_to_hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-    char hex_string[19] = {'0', 'x'};
+    char hex_string[19] = {'x'};
 
-    for(int x=0; x<16; x++){
-        // TODO: make this more readable
-        uint8_t nibble = ((0xF000000000000000>>(4*x)) & num) >> (4*(15-x));
-        hex_string[x+2] = nib_to_hex[nibble];
+    uint64_t start_value = (uint64_t)0xF << (size-4);
+
+    for(int x=0; x<size/4; x++){
+        uint64_t nibble = (start_value>>(4*x)) & num; // Use bitwise operations to isolate the nibble of interest
+        nibble >>= size - 4*(x+1); // Rightshift the nibble back to the range 0-15
+        hex_string[x+1] = nib_to_hex[nibble]; // Convert the nibble into a hexadecimal character
     }
 
     return prints(hex_string);
@@ -210,19 +186,6 @@ void move_console() {
         : "r"(start_byte), "r"(dword_count), "r"(&console.back_colour)
         : "rax", "rcx", "rdi"
     );
-}
-
-int rainbow() {
-
-    for(int i=0; i<7; i++){
-        fill_colour(COLOUR_PALETTE[i+1]);
-        text_colour(COLOUR_PALETTE[i]);
-        prints("\x04\x03\x02\x01");
-    }
-
-    reset_colour();
-
-    return 0;
 }
 
 int text_colour(struct display_colour colour) {

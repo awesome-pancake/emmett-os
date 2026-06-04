@@ -39,12 +39,6 @@ struct console_state {
 // Fills the screen with a given colour
 int fill_screen(struct display *disp, struct display_colour colour);
 
-// Clears the screen
-int cls();
-
-// Prints instructions
-int help();
-
 // Displays a character at the current console cursor position
 int printc(char c);
 
@@ -52,16 +46,13 @@ int printc(char c);
 int prints(char *str);
 
 // Prints a number
-int printn(uint64_t num);
+int printn(uint64_t num, uint8_t size);
 
 // Prints an error
 int error(char *str);
 
 // Moves the cursor according to the character
 void update_cursor(char character);
-
-// Draws a rainbow
-int rainbow();
 
 // Changes the console text colour
 int text_colour(struct display_colour colour);

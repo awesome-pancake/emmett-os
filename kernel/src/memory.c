@@ -23,15 +23,15 @@ int display_efi_mem(struct efi_memory_map *memory_map) {
 
     // Display every memory descriptor
     for(int i=0; i<memory_map->map_size/DESCRIPTOR_SIZE; i++){
-        printn(memory_map->descriptor_table[i].type);
+        printn(memory_map->descriptor_table[i].type, 64);
         printc(' ');
-        printn(memory_map->descriptor_table[i].physical_start);
+        printn(memory_map->descriptor_table[i].physical_start, 64);
         printc(' ');
-        printn(memory_map->descriptor_table[i].virtual_start);
+        printn(memory_map->descriptor_table[i].virtual_start, 64);
         printc(' ');
-        printn(memory_map->descriptor_table[i].pages);
+        printn(memory_map->descriptor_table[i].pages, 64);
         printc(' ');
-        printn(memory_map->descriptor_table[i].attribute);
+        printn(memory_map->descriptor_table[i].attribute, 64);
         prints("\n\r");
     }
 
@@ -45,9 +45,9 @@ int display_mem(struct mem_header *memory_map) {
     prints("Start:             Size:             \n\r");
     do {
         // Iterates through the memory map, displaying every entry
-        printn((uint64_t)curr_node);
+        printn((uint64_t)curr_node, 64);
         printc(' ');
-        printn(curr_node->size);
+        printn(curr_node->size, 64);
         prints("\n\r");
         curr_node = (struct mem_header*)curr_node->fd;
 
