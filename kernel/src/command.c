@@ -1,3 +1,16 @@
+// Command Handling
+// Emmett Hoffman
+// June 12, 2026
+// 
+// Description:
+// - Every command in the console is implemented here.
+// - Each command is passed the standard arguments for a main function in C:
+//     - eg. echo(int argc, char **argv);
+//     - argv stores text arguments, and argc stores the number of text arguments
+//
+// Extra for Experts:
+// - String operations in C
+
 #ifndef COMMAND
     #include <command.h>
     #define COMMAND 1
@@ -85,13 +98,13 @@ int help(){
 
     // Prints it all
     prints("Commands:\n");
-    prints("cls - Clears the console.\n");
-    prints("help - Displays a help prompt.\n");
-    prints("echo [input] - Echoes text to the console output\n");
-    prints("peek [address] - Displays the byte held at an address\n");
-    prints("poke [address] [value] - Sets the byte at an address\n");
+    prints("cls - Clears the console\n");
+    prints("help - Displays a help prompt\n");
+    prints("echo [text] - Echoes text to the console output\n");
+    prints("peek [address] - Displays the byte held at an address in memory\n");
+    prints("poke [address] [value] - Sets the byte at an address in memory\n");
     prints("rainbow - Prints a rainbow to the screen\n\n");
-    prints("Environment variables:\n");
+    prints("Environment variables (not implemented yet, do not use):\n");
     prints("$cursor_x - X position of the cursor.\n");
     prints("$cursor_y - Y position of the cursor.\n");
     prints("$back_r - The red component of the background colour.\n");
@@ -141,7 +154,7 @@ int echo(int argc, char **argv) {
 int peek(int argc, char **argv) {
 
     if(argc != 2){
-        error("Invalid operand for peek instruction.");
+        error("Invalid operand(s) for peek instruction.");
         return -1;
     }
 

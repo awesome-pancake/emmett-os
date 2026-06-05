@@ -1,3 +1,17 @@
+// Emmett OS Kernel
+// Emmett Hoffman
+// June 12, 2026
+// 
+// Description:
+// - The kernel_main() function acts as the entry point for the kernel.
+// - The main bootup logic is located here:
+//     - Retrieve different tables from the bootloader
+//     - Initialize the global descriptor table
+//     - Initialize interrupts (interrupt descriptor table, LAPIC)
+//
+// Extra for Experts:
+// - Made a program that runs in kernel mode (CPL 0)
+
 #include <emmettos.h>
 
 struct console_state console;
@@ -84,6 +98,6 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
 
     // Catches execution and ensures no undefined code is executed
     for(;;){
-        asm("hlt");
+        asm volatile("hlt");
     }
 }

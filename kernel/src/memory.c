@@ -1,3 +1,15 @@
+// Memory management
+// Emmett Hoffman
+// June 12, 2026
+// 
+// Description:
+// - Functions for initializing the PS/2 legacy keyboard controller are found here.
+// - Additionally, keyboard input handling functions are found here.
+//
+// Extra for Experts:
+// - Initialized the global descriptor table
+// - Investigated GCC compiler attributes (__attribute__((packed)))
+
 #ifndef KMEMORY
     #include <kmemory.h>
     #define KMEMORY 1

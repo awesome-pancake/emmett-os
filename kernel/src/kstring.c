@@ -1,3 +1,11 @@
+// String operations
+// Emmett Hoffman
+// June 12, 2026
+// 
+// Description:
+// - This file contains many helpful string operations for parsing console commands.
+// - All functions implemented here use C standard library function names with a k at the front.
+
 #ifndef KSTRING
     #include <kstring.h>
     #define KSTRING 1

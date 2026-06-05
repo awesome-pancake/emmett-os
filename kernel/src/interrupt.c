@@ -1,3 +1,17 @@
+// Interrupts
+// Emmett Hoffman
+// June 12, 2026
+// 
+// Description:
+// - All logic related to interrupts is located here.
+// - This file contains functions for initializing the IDT and programmable interrupt controller (LAPIC).
+// - Additionally, all interrupt service routines (ISRs) are located here.
+//
+// Extra for Experts:
+// - Worked with low-level processor tables to initialize interrupts.
+// - Communicated directly with hardware devices (LAPIC and timer interrupts)
+// - Investigated GCC compiler attributes (__attribute__((interrupt)))
+
 #ifndef INTERRUPT
     #include <interrupt.h>
     #define INTERRUPT 1
@@ -30,6 +44,7 @@ struct idt_descriptor *init_idt(struct gate_descriptor *addr) {
     }
 
     register_interrupt(addr, &_timer_isr, 0x0008, 0x8E, 0x20);  // Register the hardware timer service routine at vector 0x20
+    register_interrupt(addr, &_general_protection_isr, 0x0008, 0x8E, 0x0D); // Register the #GP fault handler
 
     struct idt_descriptor *idt_ptr = (struct idt_descriptor*)0x2000;
     
@@ -128,9 +143,15 @@ void __attribute__((interrupt)) _division_isr(void *arg) {
         : "%rcx"
     );
 
-    text_colour(COLOUR_PALETTE[0]);
-    prints("\nDivision by zero exception");
-    reset_colour();
+    error("Division by zero exception.");
+}
+
+void __attribute__((interrupt)) _general_protection_isr(void *arg) {
+
+    error("\nGeneral protection fault. Halting execution.");
+    for(;;) {
+        asm volatile("hlt");
+    }
 }
 
 const uint8_t PIC1COMMAND = 0x20;

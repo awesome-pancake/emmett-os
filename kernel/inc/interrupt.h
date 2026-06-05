@@ -61,10 +61,10 @@ void set_lapic(uint16_t reg, uint32_t value);
 // Gets a value from a local APIC register
 uint32_t get_lapic(uint16_t reg);
 
-// Retrieves a scancode from a legacy port
+// Retrieves a scancode from a legacy port (implemented in assembly)
 extern uint8_t get_port(uint8_t port);
 
-// Sets a command for a legacy port
+// Sets a command for a legacy port (implemented in assembly)
 extern void set_port(uint8_t port, uint8_t value);
 
 // Disables the 8259 legacy PIC
@@ -78,6 +78,7 @@ void start_interrupts();
 
 void __attribute__((interrupt)) _division_isr(void *arg);           // Division by zero exception handler
 void __attribute__((interrupt)) _timer_isr(void *arg);              // Hardware timer interrupt
+void __attribute__((interrupt)) _general_protection_isr(void *arg); // General protection fault handler
 
 extern const uint8_t PIC1COMMAND;   // Master PIC command port
 extern const uint8_t PIC1DATA;      // Master PIC data port

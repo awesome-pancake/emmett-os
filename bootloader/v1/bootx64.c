@@ -1,3 +1,20 @@
+// Bootloader
+// Emmett Hoffman
+// June 12, 2026
+// 
+// Description:
+// - The bootloader is a UEFI application that loads the kernel and jumps to it.
+// - Task order:
+//     - Open kernel file
+//     - Allocate space for the kernel
+//     - Read the kernel to memory
+//     - Read the .elf header to determine the kernel entry point
+//     - Jump to the kernel
+//
+// Extra for Experts:
+// - Investigated ABI for jumping to the kernel
+// - Used UEFI documentation and gnu-efi library to make a .efi program
+
 #include <efi.h>
 #include <efilib.h>
 
@@ -130,9 +147,6 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
   UINT64 page_size;
   byte_size = FileSize(file_handle);
   page_size = (UINT64)(1.0 + byte_size/0x1000);
-
-  // Add additional pages for kernel stack
-  // page_size += 2;
 
   Print(L"Kernel size: %d bytes, %d pages.\r\n", byte_size, page_size);
   

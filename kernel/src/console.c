@@ -1,3 +1,14 @@
+// Console implementation
+// Emmett Hoffman
+// June 12, 2026
+// 
+// Description:
+// - Text rendering and other console operations are performed here.
+// - The font used is stored as a raster font in an array of binary numbers.
+//
+// Extra for Experts:
+// - Worked with assembly to optimize screen fill functions
+
 #ifndef CONSOLE
     #include <console.h>
     #define CONSOLE 1

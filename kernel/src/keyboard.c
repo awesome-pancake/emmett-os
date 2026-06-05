@@ -1,3 +1,13 @@
+// Legacy keyboard implementation
+// Emmett Hoffman
+// June 12, 2026
+// 
+// Description:
+// - Functions for initializing the PS/2 legacy keyboard controller are found here.
+// - Additionally, keyboard input handling functions are found here.
+//
+// Extra for Experts:
+// - Used port commands (in, out) to communicate directly with legacy keyboard.
 
 #ifndef KEYBOARD
     #include <keyboard.h>
