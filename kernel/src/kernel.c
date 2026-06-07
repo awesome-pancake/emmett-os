@@ -38,7 +38,7 @@ int kernel_main(struct display *disp, struct efi_memory_map *efi_memory_map) {
     console.text_colour.reserved = 0x00;
 
     // Clear the console
-    cls();
+    cls(0, NULL);
     prints("\x0E\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x0F\n\x12      Emmett OS      \x12\n\x10\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x11\n");
     prints("Kernel successfully loaded.\n");
     

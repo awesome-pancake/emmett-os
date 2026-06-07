@@ -85,7 +85,7 @@ uint8_t poll_keyboard(uint8_t scan_code, bool *shift_state){
         input_buffer[input_length - 1] = '\0';
     }
 
-    // Detect a sent command
+    // Continue execution if a sent command is detected
     if(character != '\n'){
         return scan_code;
     }
@@ -109,12 +109,17 @@ uint8_t poll_keyboard(uint8_t scan_code, bool *shift_state){
             break;
         }
 
+        // Find next token
         token = kstrtok_r(NULL, ' ', &save_ptr);
     }
+
+    // Set the null terminator of argv
     argv[argc] = NULL;
 
     // Parse the command and reset the console
-    parse_command(argc, argv);
+    if(input_length > 0){
+        parse_command(argc, argv);
+    }
     flush_input();
 
     // Prepare console for next command

@@ -271,21 +271,27 @@ struct gdt_descriptor *init_gdt(struct segment_descriptor *addr) {
     return gdt_ptr;
 }
 
-void *push_heap(struct heap *curr_heap, int bytes) {
+void *kmalloc(struct heap *heap, int bytes) {
     return NULL;
 }
 
-struct heap *init_heap() {
+struct heap *init_heap(void *address, uint64_t page_size) {
 
-    // struct heap *new_heap = NULL;
+    // Initialize the heap
+    struct heap *new_heap = (struct heap*)address;
+    new_heap->size = page_size * 0x1000;
+    new_heap->top = (uint8_t*)address + sizeof(struct heap);
 
-    // for(int i=0; i<memory_map->map_size/DESCRIPTOR_SIZE; i++){
-    //     // Initialize new header at start of available memory chunk
-    //     if(memory_map->descriptor_table[i].type == EfiConventionalMemory){
-    //         new_heap = (struct heap*)memory_map->descriptor_table[i].physical_start;
-    //         return new_heap;
-    //     }
-    // }
+    // Fill the heap with initialized 64 byte chunks
+    for(int i=0; i*64 < page_size*0x1000 - sizeof(struct heap); i++){
 
-    return NULL;
+        // Locate the chunk to be initialized
+        struct kmalloc_chunk *new_chunk = (struct kmalloc_chunk*)((uint8_t*)new_heap->top + i*64);
+
+        // Initialize the data in the chunk
+        new_chunk->flags[KMALLOC_FREE] = true;
+        new_chunk->size = 64;
+    }
+
+    return new_heap;
 }

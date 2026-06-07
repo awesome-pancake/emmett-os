@@ -64,6 +64,10 @@ typedef enum {
     DESCRIPTOR_LONG_MODE = 0x20000000000000
 } GDT_FLAGS;
 
+enum kmalloc_flags {
+    KMALLOC_FREE,   // Index of free flag in kmalloc_chunk
+};
+
 // Entry in the global descriptor table
 struct segment_descriptor {
     uint64_t descriptor;
@@ -104,10 +108,14 @@ struct mem_header {
 
 // Metadata for stack-like dynamic memory allocation
 struct heap {
-    uint64_t     size;      // Maximum size of the heap in bytes
-    void        *base;      // Points to the base of the heap
+    uint64_t    size;       // Maximum size of the heap in bytes including overhead
     void        *top;       // Points to the top of the heap
-    uint64_t    padding;    // Explicitly pads heap metadata for 16 byte alignment
+};
+
+// A chunk of memory in the heap for kmalloc
+struct kmalloc_chunk {
+    uint64_t    size;       // Size of the chunk in bytes including overhead
+    bool        flags[8];   // Holds the state of the chunk, see kmalloc_flags
 };
 
 // Displays the efi memmap
@@ -132,9 +140,9 @@ struct gdt_descriptor *init_gdt(struct segment_descriptor *addr);
 extern void load_segments(uint16_t cs_selector, uint16_t ds_selector);
 
 // Moves the heap pointer upwards by a certain number of bytes and returns a pointer to the allocated space.
-void *push_heap(struct heap *curr_heap, int bytes);
+void *kmalloc(struct heap *heap, int bytes);
 
 // Initializes a heap structure.
-struct heap *init_heap();
+struct heap *init_heap(void *address, uint64_t page_size);
 
 extern const int MAP_SIZE;

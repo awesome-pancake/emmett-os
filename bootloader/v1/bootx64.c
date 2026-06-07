@@ -25,6 +25,7 @@ typedef struct{
     uint32_t    vertical_resolution;
 } DISPLAY;
 
+// Kernel memory map
 typedef struct{
     EFI_MEMORY_DESCRIPTOR           *descriptor_table;
     uint64_t                        map_size;

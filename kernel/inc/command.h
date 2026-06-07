@@ -10,16 +10,19 @@
 // Parses a command from the command line.
 int parse_command(int argc, char **argv);
 
+// Parses an environment variable
+uint8_t *parse_env_variable(char *token);
+
 /* Terminal Commands */
 
 // Prints terminal instructions
-int help();
+int help(int argc, char **argv);
 
 // Clears the screen
-int cls();
+int cls(int argc, char **argv);
 
 // Draws a rainbow
-int rainbow();
+int rainbow(int argc, char **argv);
 
 // Echoes text to the console
 int echo(int argc, char **argv);
