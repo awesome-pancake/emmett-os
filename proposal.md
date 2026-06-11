@@ -7,7 +7,7 @@ Through this project I hoped to learn how to make programs that were capable of 
 - Management of various low-level aspects of a system:
     - System interrupts
     - Global descriptor table
-    - Paging and memory virtualisation
+    - Paging and memory virtualisation (UEFI did this, whoops)
 - User I/O (keyboard, screen)
 - Methods for string output
 - Memory management functions

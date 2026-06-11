@@ -222,7 +222,7 @@ void reset_colour() {
     // Set console background colour
     console.back_colour.blue = 0x1A;
     console.back_colour.green = 0x0A;
-    console.back_colour.red = 0x1A;
+    console.back_colour.red = 0x00;
     console.back_colour.reserved = 0x00;
 
     // Set console text colour
