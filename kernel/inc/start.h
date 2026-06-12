@@ -3,5 +3,5 @@
 #include <stdbool.h>
 
 #ifndef KERNEL_ENTRY
-    #define KERNEL_ENTRY 1
+        #define KERNEL_ENTRY 1
 #endif

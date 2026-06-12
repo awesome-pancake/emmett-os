@@ -1,9 +1,9 @@
 #ifndef KERNEL_ENTRY
-    #include <start.h>
+        #include <start.h>
 #endif
 
 #ifndef KSTRING
-    #define KSTRING 1
+        #define KSTRING 1
 #endif
 
 // Below are a couple functions from string.h in the C library that I rewrote for this project.

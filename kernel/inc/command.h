@@ -1,10 +1,10 @@
 #ifndef KERNEL_ENTRY
-    #include <start.h>
-    #define KERNEL_ENTRY 1
+        #include <start.h>
+        #define KERNEL_ENTRY 1
 #endif
 
 #ifndef COMMAND
-    #define COMMAND 1
+        #define COMMAND 1
 #endif
 
 // Parses a command from the command line.
