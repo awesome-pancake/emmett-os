@@ -129,7 +129,65 @@ uint8_t *parse_env_variable(char *token) {
 
 int help(int argc, char **argv){
 
-        // Prints it all
+        // Cls help prompt
+        if(argc >= 2 && kstrncmp(argv[1], "cls", 4) == 0){
+                prints("cls:\n");
+                prints("Clears the screen. This command does not take any arguments.\n\n");
+                prints("Example Usage:\n");
+                prints("Run 'echo hello world' and then run cls immediately after. This will print the text 'hello world' to the console and then clear the screen.\n");
+                return 0;
+        }
+
+        // Echo help prompt
+        if(argc >= 2 && kstrncmp(argv[1], "echo", 5) == 0){
+                prints("echo [text]:\n");
+                prints("Repeats the input text into the console.\n\n");
+                prints("[text] - Any string of characters.\n\n");
+                prints("Example Usage:\n");
+                prints("Run the command 'echo hello world'. This should print 'hello world' to the console.\n");
+                return 0;
+        }
+
+        // peek help prompt
+        if(argc >= 2 && kstrncmp(argv[1], "peek", 5) == 0){
+                prints("peek [address]:\n");
+                prints("Displays the contents of the inputted memory address. Peek will return the result as a hexadecimal number.\n\n");
+                prints("[address] - The specific memory address to use.\n\n");
+                prints("Example Usage:\n");
+                prints("Running 'peek 123456' should display the byte held at memory address number 123456.\n");
+                return 0;
+        }
+
+        // poke help prompt
+        if(argc >= 2 && kstrncmp(argv[1], "poke", 5) == 0){
+                prints("poke [address] [value]:\n");
+                prints("Sets the contents of a specified memory address to a value. Poke is very similar to peek, but with an additional value argument. It is important to note that the poke command, if used with certain memory addresses, may cause a general protection fault or a triple fault.\n\n");
+                prints("[address] - The specific memory address to use.\n");
+                prints("[value] - The value you wish to set the memory address to.\n\n");
+                prints("Example Usage:\n");
+                prints("Running 'poke 123456 12' will change the value held at the address 123456 to 12.\n");
+                return 0;
+        }
+
+        // Rainbow help prompt
+        if(argc >= 2 && kstrncmp(argv[1], "rainbow", 8) == 0){
+                prints("rainbow:\n");
+                prints("Prints a nice little rainbow to the console. This command does not take any arguments.\n\n");
+                prints("Example Usage:\n");
+                prints("Run the command 'rainbow'. This will display a nice little rainbow to the console.\n");
+                return 0;
+        }
+
+        // Environment variable help prompt
+        if(argc >= 2 && argv[1][0] == '$'){
+                prints("Environment variables:\n");
+                prints("Environment variables are labels that are given to special variables in the console. You can modify and read these variables the same way you would a regular address using poke and peek. You can also use echo to read the value of an environment variable.\n\n");
+                prints("Example Usage:\n");
+                prints("Run the command 'echo $back_b'. This will display the green component of the background colour in the console. You can also temporarily set the background colour with 'poke $back_g xFF'.\n");
+                return 0;
+        }
+
+        // Default help prompt
         prints("Commands:\n");
         prints("cls - Clears the console\n");
         prints("help [command] - Displays a help prompt, optionally about a command\n");
@@ -196,6 +254,7 @@ int peek(int argc, char **argv) {
 
         uint64_t address = 0;
 
+        // Return if invalid operand
         if(argc != 2){
                 error("Invalid operand(s) for peek instruction.");
                 return -1;
@@ -216,6 +275,7 @@ int poke(int argc, char **argv) {
         uint64_t address = 0;
         uint64_t value = 0;
 
+        // Return if invalid operand
         if(argc != 3){
                 error("Invalid operand(s) for poke instruction.");
                 return -1;
@@ -223,6 +283,12 @@ int poke(int argc, char **argv) {
 
         if(argv[1][0] == '$') { // Handles environment variables for address
                 address = (uint64_t)parse_env_variable(argv[1]);
+
+                // Ensure that invalid environment variables are not read.
+                if(address == 0){
+                        error("Invalid environment variable.");
+                        return -1;
+                }
         } else {                // Handles regular arguments
                 address = katoi(argv[1]);
         }
