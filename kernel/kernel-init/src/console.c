@@ -5,34 +5,17 @@
 // Description:
 // - Text rendering and other console operations are performed here.
 // - The font used is stored as a raster font in an array of binary numbers.
-//
-// Extra for Experts:
-// - Worked with assembly to optimize screen fill functions
 
-#ifndef CONSOLE
-        #include <console.h>
-        #define CONSOLE 1
-#endif
+#include <console.h>
 
-int fill_screen(struct display *disp, struct display_colour colour) {
+int fill_screen(struct Display *disp, struct display_colour colour) {
+
+        // Initialize references for frame buffer, width, and height
         uint8_t *bf = disp->frame_buffer;
         uint32_t width = disp->horizontal_resolution;
         uint32_t height = disp->vertical_resolution;
 
-        // for(int y=0; y<height; y++){
-        //     for(int x=0; x<width; x++){
-        //         // Get pointer to current pixel
-        //         DISPLAY_COLOUR *px = (DISPLAY_COLOUR*)(bf + sizeof(DISPLAY_COLOUR)*(y*width + x));
-
-        //         // Fill pixel
-        //         px->reserved = 0;
-        //         px->blue = colour.blue;
-        //         px->green = colour.green;
-        //         px->red = colour.red;
-        //     }
-        // }
-
-        // Optimized version of the commented code
+        // Fills directly to video buffer
         uint32_t pixels = width * height;
         asm volatile(
                 "movl (%2), %%eax;"

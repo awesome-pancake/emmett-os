@@ -1,11 +1,7 @@
-#ifndef KERNEL_ENTRY
-        #include <start.h>
-        #define KERNEL_ENTRY 1
-#endif
+#pragma once
 
-#ifndef CONSOLE
-        #define CONSOLE 1
-#endif
+#include <curlywaffle.h>
+#include <kernel-init.h>
 
 // Font information
 struct font{
@@ -20,16 +16,9 @@ struct display_colour {
         uint8_t     reserved;
 };
 
-// Holds information about the display
-struct display{
-        uint8_t     *frame_buffer;
-        uint32_t    horizontal_resolution;
-        uint32_t    vertical_resolution;
-};
-
 // Holds state of the console
 struct console_state {
-        struct display              *display;
+        struct Display              *display;
         uint8_t                     cursor_x;
         uint8_t                     cursor_y;
         struct display_colour       back_colour;
@@ -37,7 +26,7 @@ struct console_state {
 };
 
 // Fills the screen with a given colour
-int fill_screen(struct display *disp, struct display_colour colour);
+int fill_screen(struct Display *disp, struct display_colour colour);
 
 // Displays a character at the current console cursor position
 int printc(char c);
