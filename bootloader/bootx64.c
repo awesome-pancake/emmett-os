@@ -15,29 +15,17 @@
 #include <efilib.h>
 
 // Kernel display structure
-struct Display {
+typedef struct{
         uint8_t     *frame_buffer;
         uint32_t    horizontal_resolution;
         uint32_t    vertical_resolution;
-};
+} DISPLAY;
 
-// UEFI memory map
-struct MemoryMap {
+// Kernel memory map
+typedef struct{
         EFI_MEMORY_DESCRIPTOR           *descriptor_table;
         uint64_t                        map_size;
-};
-
-// Holds the entry points of all kernel startup processes
-struct Proc {
-        void    *kernel_init;
-};
-
-// Table of boot time information that is passed to the kernel
-struct BootTable {
-        struct Display          display;
-        struct MemoryMap        *memory_map;
-        struct Proc             boot_proc;
-};
+} KERNEL_MEMMAP;
 
 EFI_FILE_HANDLE getVolume(EFI_HANDLE image)
 {
@@ -112,9 +100,9 @@ EFI_STATUS getMapKey(UINT64 *map_key, UINTN *size, EFI_MEMORY_DESCRIPTOR **outpu
         return EFI_SUCCESS;
 }
 
-struct Display *getDisplay()
+DISPLAY *getDisplay()
 {
-        struct Display *display = AllocatePool(sizeof(struct Display));
+        DISPLAY *display = AllocatePool(sizeof(DISPLAY));
         EFI_GUID gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
         EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
 
@@ -127,12 +115,11 @@ struct Display *getDisplay()
         return display;
 }
 
-EFI_STATUS getEntryPoint(UINT64 header, UINT64 *entry_point)
+EFI_STATUS getEntryPoint(UINT64 header, UINT64 *start)
 {
         // Reads the entry point for the kernel off of the elf header
-        UINT64 elf_entry_offset = 0x18;
-        UINT64 offset_header = header + elf_entry_offset;
-        *entry_point = *(UINT64*)offset_header;
+        UINT64 entry_point = header + 0x18;
+        *start = *(UINT64*)entry_point;
 
         return EFI_SUCCESS;
 }
@@ -150,10 +137,10 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
         EFI_PHYSICAL_ADDRESS kernel_buffer = 0;
         EFI_FILE_HANDLE volume = getVolume(ImageHandle);
         EFI_FILE_HANDLE file_handle;
-        CHAR16 *file_name = L"cwkernel.elf";
+        CHAR16 *file_name = L"kernel.elf";
 
         // Kernel entrypoint
-        void (*kernelMain)(struct BootTable entry_table);
+        void (*kernelMain)(DISPLAY *disp, KERNEL_MEMMAP *mem_map);
 
         // Open kernel executable
         status = uefi_call_wrapper(volume->Open, 5, volume, &file_handle, file_name, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY | EFI_FILE_HIDDEN | EFI_FILE_SYSTEM);
@@ -209,11 +196,11 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
         Print(L"Successfully obtained kernel entry point: %X", entry_offset);
 
-        struct Display *display = getDisplay();
+        DISPLAY *display = getDisplay();
         EFI_MEMORY_DESCRIPTOR *descriptor_table = NULL;
         UINTN map_size = 0;
         UINT64 map_key = 0;
-        struct MemoryMap memory_map;
+        KERNEL_MEMMAP memory_map;
 
         // Get memory map
         status = getMapKey(&map_key, &map_size, &descriptor_table);
@@ -232,18 +219,9 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
                 return status;
         }
 
-        // Initialize boot table to pass to the kernel
-        struct BootTable boot_table = {
-                .display = *display,
-                .memory_map = &memory_map,
-                .boot_proc = {
-                        .kernel_init = kernelMain,
-                },
-        };
-
         // Jump to kernel
         kernelMain = (void*)(kernel_buffer + entry_offset);
-        kernelMain(boot_table);
+        kernelMain(display, &memory_map);
         
         // Halt execution in a loop in case the jump fails
         for(;;);
