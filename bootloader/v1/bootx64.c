@@ -10,6 +10,10 @@
 //     - Read the kernel to memory
 //     - Read the .elf header to determine the kernel entry point
 //     - Jump to the kernel
+//
+// Extra for Experts:
+// - Investigated ABI for jumping to the kernel
+// - Used UEFI documentation and gnu-efi library to make a .efi program
 
 #include <efi.h>
 #include <efilib.h>
@@ -27,15 +31,12 @@ typedef struct{
         uint64_t                        map_size;
 } KERNEL_MEMMAP;
 
-EFI_FILE_HANDLE getVolume(EFI_HANDLE image)
+EFI_FILE_HANDLE GetVolume(EFI_HANDLE image)
 {
-        // Initialize loaded image protocol and file system protocol GUIDs
-        EFI_GUID lip_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
-        EFI_GUID fs_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
-
-        // Initialize variables
         EFI_LOADED_IMAGE *loaded_image = NULL;
+        EFI_GUID lip_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
         EFI_FILE_IO_INTERFACE *io_volume;
+        EFI_GUID fs_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
         EFI_FILE_HANDLE volume;
 
         // Get loaded image protocol interface
@@ -48,21 +49,18 @@ EFI_FILE_HANDLE getVolume(EFI_HANDLE image)
         return volume;
 }
 
-UINT64 fileSize(EFI_FILE_HANDLE file_handle)
+UINT64 FileSize(EFI_FILE_HANDLE file_handle)
 {
-        // Initialize size and file_info
         UINT64 size;
         EFI_FILE_INFO *file_info;
 
-        // Find size of a given file handle
         file_info = LibFileInfo(file_handle);
         size = file_info->FileSize;
         FreePool(file_info);
-
         return size;
 }
 
-EFI_STATUS getMapKey(UINT64 *map_key, UINTN *size, EFI_MEMORY_DESCRIPTOR **output_map)
+EFI_STATUS GetMapKey(UINT64 *map_key, UINTN *size, EFI_MEMORY_DESCRIPTOR **output_map)
 {
         // Get memory map size and initialize some variables
         EFI_STATUS status;
@@ -71,7 +69,7 @@ EFI_STATUS getMapKey(UINT64 *map_key, UINTN *size, EFI_MEMORY_DESCRIPTOR **outpu
         UINTN descriptor_size = 0;
         UINT32 descriptor_version = 0;
 
-        // The first call to GetMemoryMap is expected to return the memory map size as well as descriptor size
+        // The first call to GetMemoryMap is expected to fail
         status = uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size, *output_map, NULL, &descriptor_size, NULL);
         if(status != EFI_BUFFER_TOO_SMALL && status != EFI_SUCCESS){
                 Print(L"Could not get memory map size: %d\r\n", status);
@@ -100,7 +98,7 @@ EFI_STATUS getMapKey(UINT64 *map_key, UINTN *size, EFI_MEMORY_DESCRIPTOR **outpu
         return EFI_SUCCESS;
 }
 
-DISPLAY *getDisplay()
+DISPLAY *GetDisplay()
 {
         DISPLAY *display = AllocatePool(sizeof(DISPLAY));
         EFI_GUID gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
@@ -115,7 +113,7 @@ DISPLAY *getDisplay()
         return display;
 }
 
-EFI_STATUS getEntryPoint(UINT64 header, UINT64 *start)
+EFI_STATUS GetEntryPoint(UINT64 header, UINT64 *start)
 {
         // Reads the entry point for the kernel off of the elf header
         UINT64 entry_point = header + 0x18;
@@ -130,19 +128,13 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
         InitializeLib(ImageHandle, SystemTable);
 
-        // Status of each UEFI call
         EFI_STATUS status;
-        
-        // Initialize necessary information for kernel
         EFI_PHYSICAL_ADDRESS kernel_buffer = 0;
-        EFI_FILE_HANDLE volume = getVolume(ImageHandle);
+        EFI_FILE_HANDLE volume = GetVolume(ImageHandle);
         EFI_FILE_HANDLE file_handle;
         CHAR16 *file_name = L"kernel.elf";
 
-        // Kernel entrypoint
-        void (*kernelMain)(DISPLAY *disp, KERNEL_MEMMAP *mem_map);
-
-        // Open kernel executable
+        // Open file
         status = uefi_call_wrapper(volume->Open, 5, volume, &file_handle, file_name, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY | EFI_FILE_HIDDEN | EFI_FILE_SYSTEM);
         if(EFI_ERROR(status)){
                 Print(L"(ERROR) Could not open file, or find volume. Exit code: %d\r\n", status);
@@ -151,15 +143,15 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
         Print(L"Successfully opened kernel file.\r\n");
 
-        // Find the size of the kernel for allocation
+        // Size of the file
         UINT64 byte_size;
         UINT64 page_size;
-        byte_size = fileSize(file_handle);
+        byte_size = FileSize(file_handle);
         page_size = (UINT64)(1.0 + byte_size/0x1000);
 
         Print(L"Kernel size: %d bytes, %d pages.\r\n", byte_size, page_size);
         
-        // Allocate pages for kernel
+        // Allocate pages
         status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages, EfiLoaderData, page_size, &kernel_buffer);
         if(EFI_ERROR(status)){
                 Print(L"(ERROR) Could not allocate pages. Exit code: %d\r\n", status);
@@ -186,9 +178,8 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
         Print(L"Successfully closed file.\r\n");
 
-        // Determine entry offset within kernel file
         UINT64 entry_offset = 0;
-        status = getEntryPoint(kernel_buffer, &entry_offset);
+        status = GetEntryPoint(kernel_buffer, &entry_offset);
         if(EFI_ERROR(status)){
                 Print(L"(ERROR) Could not get kernel entry point. Exit code: %d\r\n", status);
                 return status;
@@ -196,14 +187,13 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
         Print(L"Successfully obtained kernel entry point: %X", entry_offset);
 
-        DISPLAY *display = getDisplay();
+        DISPLAY *display = GetDisplay();
         EFI_MEMORY_DESCRIPTOR *descriptor_table = NULL;
         UINTN map_size = 0;
         UINT64 map_key = 0;
         KERNEL_MEMMAP memory_map;
 
-        // Get memory map
-        status = getMapKey(&map_key, &map_size, &descriptor_table);
+        status = GetMapKey(&map_key, &map_size, &descriptor_table);
         if(EFI_ERROR(status)){
                 Print(L"(ERROR) Could not get memory map. Exit code: %d\r\n", status);
                 return status;
@@ -219,10 +209,18 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
                 return status;
         }
 
-        // Jump to kernel
-        kernelMain = (void*)(kernel_buffer + entry_offset);
-        kernelMain(display, &memory_map);
+        // Prepare for jump to kernel
+        kernel_buffer += entry_offset;
+        asm(
+                "mov %1, %%rdi;"
+                "mov %2, %%rsi;"
+                "jmp *%0;"
+                :
+                :"r"(kernel_buffer),
+                "r"(display),
+                "r"(&memory_map)
+        );
         
-        // Halt execution in a loop in case the jump fails
+        // Just in case
         for(;;);
 }
